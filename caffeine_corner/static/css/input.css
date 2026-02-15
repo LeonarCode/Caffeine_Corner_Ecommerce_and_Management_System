@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@font-face {
+    font-family: 'MontserratExtrabold';
+    src: url('../font/Montserrat-ExtraBold.ttf');
+}
+@font-face {
+    font-family: 'ArialFont';
+    src: url('../font/ARIAL.TTF');
+}
+@theme{
+    --font-montserrat: 'MontserratExtrabold', sans-serif;
+    --font-arial: 'ArialFont', sans-serif;
+}
+@theme{
+    --color-coffee: #6F4E37;
+}

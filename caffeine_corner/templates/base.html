@@ -8,6 +8,15 @@
     <title>{% block title %}Caffeine Corner{% endblock %}</title>
 </head>
 <body>
-    <div></div>
+    <header>
+        <div>
+            <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo">
+            <h2>Caffeine</h2>
+            <h2>Corner</h2>
+        </div>
+    </header>
+    <div>
+        {% block content %}{% endblock %}
+    </div>
 </body>
 </html>

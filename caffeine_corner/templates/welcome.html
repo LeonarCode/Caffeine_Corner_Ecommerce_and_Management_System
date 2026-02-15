@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Welcome</title>
+    <style>
+        .image-background {
+            background-image: url("{% static 'img/Background.jpeg' %}");
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body class="image-background">
+    <div class="flex flex-col items-center justify-center h-screen">
+        <div class="flex flex-row items-center">
+            <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-32 w-32 sm:h-50 sm:w-50 rounded-full mr-16">
+            <div>
+                <h2 class="text-white text-xl sm:text-3xl font-montserrat font-bold tracking-widest">CAFFEINE</h2>
+                <h2 class="text-white text-xl sm:text-3xl font-montserrat font-bold tracking-widest">CORNER</h2>
+            </div>
+        </div>
+        <div class="w-[350px] h-[500px] sm:w-[1000px] sm:h-[510px] bg-coffee/70 mt-10 backdrop-blur-md rounded-[40px] p-10 text-center mb-10">
+            <h2 class="font-arial font-bold text-lg text-[20px] sm:text-[32px] text-white">Welcome to Caffeine Corner Coffee Shop</h2>
+            <p class="font-arial text-[18px] sm:text-[28px] text-sm sm:text-md text-white m-5 sm:m-10">This is the official website of Caffeine Corner the Coffee shop based in Garcia Hernandez Bohol. You can buy a product by visiting their shop and online shopping by visiting this website.</p>
+            <div class="flex flex-col gap-y-5 sm:flex-row sm:gap-80 justify-center mt-5 sm:mt-20">
+                <a href="#" class="bg-white text-coffee py-2 sm:py-3 sm:px-7 rounded-4xl text-lg sm:text-2xl font-bold transform transition duration-300 hover:scale-110">Get Started</a>
+                <a href="#" class="bg-coffee text-white py-2 sm:py-3 sm:px-12 rounded-4xl text-lg sm:text-2xl font-bold border-2 border-white transform transition duration-300 hover:scale-110">Sign In</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
