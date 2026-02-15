@@ -6,17 +6,42 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <title>{% block title %}Caffeine Corner{% endblock %}</title>
+    <style>
+        .hide-search {
+            display: none;
+        }
+        .show-search {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div>
-            <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo">
-            <h2>Caffeine</h2>
-            <h2>Corner</h2>
+    <header class="bg-coffee fixed-top">
+        <div class="flex flex-row p-3 items-center justify-between">
+            <div class="flex flex-row items-center">
+                <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-16 w-16 rounded-full ml-5 sm:ml-10">
+                <div class="ml-5">
+                    <h2 class="text-white text-md sm:text-lg font-montserrat font-bold tracking-widest">CAFFEINE</h2>
+                    <h2 class="text-white text-md sm:text-lg font-montserrat font-bold tracking-widest">CORNER</h2>
+                </div>
+            </div>
+            <div class="mr-10 flex flex-col-reverse items-end sm:flex-row sm:items-center gap-x-3">
+                <input type="text" name="" id="" placeholder="Search Products" class="bg-white mt-10 sm:mt-0 p-0 sm:w-56 sm:p-2 hide-search">
+                <button class="mt-10 sm:mt-0" onclick="showSearch()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-white">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </header>
     <div>
         {% block content %}{% endblock %}
     </div>
+    <script>
+        function showSearch(){
+            document.querySelector('.hide-search').classList.toggle('show-search');
+        }
+    </script>
 </body>
 </html>
