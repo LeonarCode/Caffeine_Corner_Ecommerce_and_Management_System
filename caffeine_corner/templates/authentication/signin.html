@@ -3,4 +3,31 @@
 {% block title %}Sign Up{% endblock %}
 
 {% block content %}
+    {% load static %}
+    <div class="h-[calc(100vh-88px)] bg-cover bg-center flex flex-col justify-center items-center" style="background-image: url('{% static "img/Background.jpeg" %}');">
+        <div class="w-[350px] sm:w-[1000px] flex flex-col items-center justify-center bg-coffee/70 backdrop-blur-md rounded-[40px] text-center p-10 gap-y-5">
+            <h2 class="text-2xl text-white mb-6 font-bold">Welcome Back</h2>
+            <a href="#" class="bg-white py-1 w-[300px] sm:w-[500px] rounded-4xl">
+                <span class="flex flex-row items-center justify-center">
+                    <img src="{% static 'img/Google.png'%}" alt="Google" class="h-10 w-18 sm:h-12 sm:w-20">
+                    <p class="text-lg text-coffee font-bold">Continue with Google</p>
+                </span>
+            </a>
+            <a href="#" class="bg-white py-1 w-[300px] sm:w-[500px] rounded-4xl">
+                <span class="flex flex-row items-center justify-center">
+                    <img src="{% static 'img/Facebook.png'%}" alt="Google" class="h-10 w-16 sm:h-12 sm:w-18 ml-1">
+                    <p class="text-lg text-coffee font-bold">Continue with Facebook</p>
+                </span>
+            </a>
+            <a href="#" class="bg-white py-2 w-[300px] sm:w-[500px] rounded-4xl">
+                <span class="flex flex-row items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 sm:size-10 mr-4 text-coffee">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                    </svg>
+                    <p class="text-lg text-coffee font-bold">Sign In with Email</p>
+                </span>
+            </a>
+            <p class="text-lg font-bold text-white">Don't have an account? <a href="#" class="text-cyan-400 underline">Sign Up</a></p>
+        </div>
+    </div>
 {% endblock %}
