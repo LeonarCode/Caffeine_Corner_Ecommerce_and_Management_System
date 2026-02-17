@@ -37,7 +37,35 @@ class Variant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.size}"
     
+class Inventory(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        if self.variant:
+            return f"{self.product.name} - {self.variant.size} Inventory"
+        return f"{self.product.name} Inventory"
     
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        if self.variant:
+            return f"{self.user.username} - {self.product.name} ({self.variant.size}) x {self.quantity}"
+        return f"{self.user.username} - {self.product.name} x {self.quantity}"
+    
+class Ingredient(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.name
 class UserProfile(models.Model):
     ROLE_CHOICES = (
         ('admin', 'Admin'),

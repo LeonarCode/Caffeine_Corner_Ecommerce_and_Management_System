@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Email Sign Up{% endblock  %}
+
+{% block content %}
+    {% load static %}
+    <div class="h-[calc(100vh-88px)] bg-cover bg-center flex flex-col justify-center items-center" style="background-image: url('{% static "img/Background.jpeg" %}');">
+        <div class="w-[350px] sm:w-[1000px] flex flex-col items-center justify-center bg-coffee/70 backdrop-blur-md rounded-[40px] text-center p-10 space-y-5">
+            <div class="flex flex-row items-center gap-x-4 self-start mb-8">
+                <a href="#" class="flex flex-row self-start text-white text-2xl font-bold items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
+                        <path fill-rule="evenodd" d="M11.03 3.97a.75.75 0 0 1 0 1.06l-6.22 6.22H21a.75.75 0 0 1 0 1.5H4.81l6.22 6.22a.75.75 0 1 1-1.06 1.06l-7.5-7.5a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+                <h2 class="text-xl sm:text-2xl text-white ml-20 sm:ml-95">Sign Up</h2>
+            </div>
+            <form action="" class="w-80 sm:w-150 gap-y-5 flex flex-col">
+                <div class="relative">
+                    <input type="email" name="email" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+
+                    <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
+                    Email
+                    </label>
+                </div>
+                <!-- Name -->
+                <div class="relative">
+                    <input type="text" name="name" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+
+                    <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
+                    Name
+                    </label>
+                </div>
+
+                <!-- Password -->
+                <div class="relative">
+                    <input type="password" name="password" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+
+                    <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
+                    Password
+                    </label>
+                </div>
+                <button type="submit" class="bg-white py-2 w-full rounded-4xl text-lg text-coffee font-bold transform transition duration-300 hover:scale-110 mt-5 mb-8">Sign Up</button>
+            </form>
+        </div>
+    </div>
+{% endblock  %}
