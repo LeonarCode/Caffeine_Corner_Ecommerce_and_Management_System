@@ -2,9 +2,13 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here.
+
+# Products
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    sort_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -16,7 +20,12 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2)
     sku = models.CharField(max_length=20, unique=True)
+    barcode = models.CharField(max_length=150)
     image = models.ImageField(upload_to='product_images/',blank=True, max_length=255)
+    sort_order = models.IntegerField(default=0)
+    is_available = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
+    is_seasonal = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -33,19 +42,11 @@ class Variant(models.Model):
     size = models.CharField(max_length=20, choices=SIZE_CHOICES)
     additional_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     sku = models.CharField(max_length=20, unique=True)
+    barcode = models.CharField(max_length=150)
+
 
     def __str__(self):
         return f"{self.product.name} - {self.size}"
-    
-class Inventory(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
-    quantity = models.PositiveIntegerField(default=0)
-
-    def __str__(self):
-        if self.variant:
-            return f"{self.product.name} - {self.variant.size} Inventory"
-        return f"{self.product.name} Inventory"
     
 class CartItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -58,14 +59,38 @@ class CartItem(models.Model):
             return f"{self.user.username} - {self.product.name} ({self.variant.size}) x {self.quantity}"
         return f"{self.user.username} - {self.product.name} x {self.quantity}"
     
-class Ingredient(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField(default=0)
+# Inventory Side
+class InventoryCategory(models.Model):
+    name = models.CharField(null=False, blank=False, max_length=100)
 
     def __str__(self):
         return self.name
+
+
+class Inventory(models.Model):
+    category = models.ForeignKey(InventoryCategory, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    sku = models.CharField(max_length=20, unique=True)
+    unit = models.CharField(max_length=20)
+    quantity_on_hand = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    quantity_reserved = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    reorder_points = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    reorder_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.sku})"
+    
+class Ingredient(models.Model):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE)
+    inventory = models.OneToOneField(Inventory, on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=20)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.inventory.name} ({self.quantity} {self.unit})"
+
 class UserProfile(models.Model):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
