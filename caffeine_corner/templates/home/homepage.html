@@ -3,5 +3,53 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <h1 class="text-2xl font-bold">Welcome to Caffeine Corner</h1>
+    <div>
+        <div class="bg-[#3D1F00] text-[#C4A882]">
+            <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+                <div class="flex items-center justify-center gap-4 px-6 py-8">
+                    <div class="text-3xl shrink-0">🌿</div>
+                    <div>
+                        <h2 class="text-lg font-bold font-sans">Ethnically Sourced</h2>
+                        <p class="font-sans leading-[1.4]">Direct trade with farmers</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-4 px-6 py-8">
+                    <div class="text-3xl shrink-0">🔬</div>
+                    <div>
+                        <h2 class="text-lg font-bold font-sans">Lab-Tested Quality</h2>
+                        <p class="font-sans leading-[1.4]">Every batch, guaranteed</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-4 px-6 py-8">
+                    <div class="text-3xl shrink-0">📦</div>
+                    <div>
+                        <h2 class="text-lg font-bold font-sans">Fast Shipping</h2>
+                        <p class="font-sans leading-[1.4]">Delivered within 24 hours</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-4 px-6 py-8">
+                    <div class="text-3xl shrink-0">♻️</div>
+                    <div>
+                        <h2 class="text-lg font-bold font-sans">Eco Packaging</h2>
+                        <p class="font-sans leading-[1.4]">Recyclable and biodegradable materials</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a href="#">All</a>
+            {% for category in categories|slice:":4" %}
+                <a href="#">{{ category.name }}</a>
+            {% endfor %}
+        </div>
+        <div>
+            {% for product in products|slice:":8" %}
+                <div>
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    <h3>{{ product.name }}</h3>
+                    <p>&#8369;{{ product.price }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 {% endblock %}

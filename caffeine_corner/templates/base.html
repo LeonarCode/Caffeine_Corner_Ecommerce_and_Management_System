@@ -10,7 +10,7 @@
 <body>
     <header class="bg-coffee fixed-top">
         <div class="flex flex-row p-3 items-center justify-between">
-            <div class="hidden sm:flex flex-row items-center">
+            <div class="flex flex-row items-center">
                 <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-16 w-16 rounded-full ml-5 sm:ml-10">
                 <div class="ml-5">
                     <h2 class="text-white text-md sm:text-lg font-montserrat font-bold tracking-widest">CAFFEINE</h2>
@@ -35,6 +35,9 @@
     <div>
         {% block content %}{% endblock %}
     </div>
+    {% if show_footer|default:True %}
+        {% include 'home/footer.html' %}
+    {% endif %}
     <script>
     </script>
 </body>
