@@ -6,6 +6,7 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <title>{% block title %}Caffeine Corner{% endblock %}</title>
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <header class="bg-coffee fixed-top">
@@ -28,7 +29,7 @@
             </div>
             {% endif %}
             {% if signUp|default:False %}
-            <a href="#" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl mr-20">Sign Up</a>
+            <a href="{% url 'signup' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl mr-20">Sign Up</a>
             {% endif %}
         </div>
     </header>

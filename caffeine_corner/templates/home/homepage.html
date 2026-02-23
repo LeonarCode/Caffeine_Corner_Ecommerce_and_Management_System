@@ -2,8 +2,25 @@
 
 {% block title %}Home{% endblock %}
 
+{% block styles %}
+    <style>
+        .cat-pill{
+            background-color: white;
+            color: #6f4e37;
+            padding: 0.5rem 1rem;
+            border: 2px solid #6f4e37;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+        .cat-pill:hover, .cat-pill.active {
+            background-color: #6f4e37;
+            color: white;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
-    <div>
+    <div class="flex flex-col">
         <div class="bg-[#3D1F00] text-[#C4A882]">
             <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
                 <div class="flex items-center justify-center gap-4 px-6 py-8">
@@ -36,20 +53,27 @@
                 </div>
             </div>
         </div>
-        <div>
-            <a href="#">All</a>
-            {% for category in categories|slice:":4" %}
-                <a href="#">{{ category.name }}</a>
+        <div class="flex flex-row gap-4 self-end mr-5 mt-5">
+            <a href="{% url 'home' %}" class="cat-pill active">All</a>
+            {% for category in categories %}
+                <a href="{% url 'getbyCategory' category.id %}" class="cat-pill">{{ category.name }}</a>
             {% endfor %}
         </div>
         <div>
-            {% for product in products|slice:":8" %}
-                <div>
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                    <h3>{{ product.name }}</h3>
-                    <p>&#8369;{{ product.price }}</p>
-                </div>
+            {% for product in products %}
+                <a href="#">
+                    <span>
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        <h3>{{ product.name }}</h3>
+                        <p>&#8369;{{ product.price }}</p>
+                    </span>
+                </a>
             {% endfor %}
+            {% if not show_all %}
+                <a href="?all=true">See All</a>
+            {% else %}
+                <a href="?">Show Less</a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
