@@ -4,6 +4,7 @@
 
 {% block content %}
     {% load static %}
+    {% load socialaccount %}
     <div class="h-[calc(100vh-88px)] bg-cover bg-center flex flex-col justify-center items-center" style="background-image: url('{% static "img/Background.jpeg" %}');">
         <div class="w-[350px] sm:w-[1000px] flex flex-col items-center justify-center bg-coffee/70 backdrop-blur-md rounded-[40px] text-center p-10 gap-y-5">
             <h2 class="text-2xl text-white mb-6 font-bold">Welcome Back</h2>
@@ -27,7 +28,7 @@
                     <p class="text-lg text-coffee font-bold">Sign In with Email</p>
                 </span>
             </a>
-            <p class="text-lg font-bold text-white">Don't have an account? <a href="#" class="text-cyan-400 underline">Sign Up</a></p>
+            <p class="text-lg font-bold text-white">Don't have an account? <a href="{% url 'signup' %}" class="text-cyan-400 underline">Sign Up</a></p>
         </div>
     </div>
 {% endblock %}

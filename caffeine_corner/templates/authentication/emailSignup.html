@@ -14,30 +14,58 @@
                 </a>
                 <h2 class="text-xl sm:text-2xl text-white ml-20 sm:ml-95">Sign Up</h2>
             </div>
-            <form action="" class="w-80 sm:w-150 gap-y-5 flex flex-col">
+            <form action="" method="POST" class="w-80 sm:w-150 gap-y-5 flex flex-col">
+                {% csrf_token %}
                 <div class="relative">
-                    <input type="email" name="email" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+                    <input type="email" name="email" placeholder=" " value="{{ form.email.value|default:'' }}" class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
 
                     <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
                     Email
                     </label>
+                    {% if form.email.errors %}
+                        <p class="text-red-400 text-sm mt-1">
+                            {{ form.email.errors.0 }}
+                        </p>
+                    {% endif %}
                 </div>
                 <!-- Name -->
                 <div class="relative">
-                    <input type="text" name="name" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+                    <input type="text" name="username" placeholder=" " value="{{ form.username.value|default:'' }}" class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
 
                     <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
-                    Name
+                    Username
                     </label>
+                    {% if form.username.errors %}
+                        <p class="text-red-400 text-sm mt-1">
+                            {{ form.username.errors.0 }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Password -->
                 <div class="relative">
-                    <input type="password" name="password" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+                    <input type="password" name="password1" placeholder=" " value="{{ form.password.value|default:'' }}" class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
 
                     <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
                     Password
                     </label>
+                    {% if form.password1.errors %}
+                        <p class="text-red-400 text-sm mt-1">
+                            {{ form.password1.errors.0 }}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="relative">
+                    <input type="password" name="password2" placeholder=" " value="{{ form.password.value|default:'' }}" class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>
+
+                    <label class="absolute left-5 top-1 text-sm text-white/80 transition-all duration-300 ease-out peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/60 peer-focus:top-1 peer-focus:text-sm peer-focus:text-white pointer-events-none">
+                    Confirm Password
+                    </label>
+                    {% if form.password2.errors %}
+                        <p class="text-red-400 text-sm mt-1">
+                            {{ form.password2.errors.0 }}
+                        </p>
+                    {% endif %}
                 </div>
                 <button type="submit" class="bg-white py-2 w-full rounded-4xl text-lg text-coffee font-bold transform transition duration-300 hover:scale-110 mt-5 mb-8">Sign Up</button>
             </form>

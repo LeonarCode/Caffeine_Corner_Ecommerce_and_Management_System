@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from .forms import RegistrationForm
 
 # Create your views here.
 def signin(request):
@@ -8,7 +9,16 @@ def signup(request):
     return render(request, 'authentication/signup.html')
 
 def email_signup(request):
-    return render(request, 'authentication/emailSignup.html')
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            print("SUCCESS ✅")
+        else:
+            print(form.errors)
+    else:
+        form = RegistrationForm()
 
-def email_signin(request):
-    return render(request, 'authentication/emailSignin.html')
+    return render(request, 'authentication/emailSignup.html', {'form': form})
+
+
