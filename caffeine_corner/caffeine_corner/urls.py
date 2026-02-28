@@ -22,6 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('registration/', include('registration.urls')),
-    path('shop/', include("online_shop.urls")),
+    path('', include("online_shop.urls")),
     path('email-signin/', auth_views.LoginView.as_view(template_name='authentication/emailSignin.html'), name='email_signin'),
 ]

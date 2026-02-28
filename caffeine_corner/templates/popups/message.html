@@ -1,0 +1,16 @@
+{% if messages %}
+    {% for message in messages %}
+        <div class="fixed top-5 right-5 bg-coffee px-5 py-3 rounded-md flex items-center shadow-lg z-50">
+            <div class="flex items-center 
+            {% if message.tags == 'error' %}bg-red-500
+            {% elif message.tags == 'warning' %}bg-yellow-500
+            {% elif message.tags == 'info' %}bg-blue-500
+            {% else %}bg-green-500
+            {% endif %} py-2 flex items-center border-y-3 border-white text-white
+            ">
+                <span class="text-lg font-bold">{{ message }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="ml-2 text-white hover:text-gray-300">Okay</button>
+        </div>
+    {% endfor %}
+{% endif %}

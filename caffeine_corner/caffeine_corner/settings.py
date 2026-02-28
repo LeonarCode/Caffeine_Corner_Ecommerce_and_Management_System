@@ -34,6 +34,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.import_export',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,11 +50,13 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
 
+    'import_export',
     'rest_framework',
     'corsheaders',
     'online_shop',
     'api',
     'registration',
+    'inventory',
 ]
 
 MIDDLEWARE = [
@@ -201,4 +205,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 LOGIN_REDIRECT_URL = '/shop/home/'
 LOGOUT_REDIRECT_URL = '/shop/home/'
+
+# Mag-expire ang session pag nagsara ng browser
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Or set a timeout (in seconds) — e.g., 1 hour
+SESSION_COOKIE_AGE = 3600
+
+UNFOLD = {
+    "SITE_HEADER": "Caffeine Corner Admin",
+}
 
