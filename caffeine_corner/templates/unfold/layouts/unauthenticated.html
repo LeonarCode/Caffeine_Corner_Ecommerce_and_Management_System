@@ -1,0 +1,25 @@
+{% extends 'unfold/layouts/skeleton.html' %}
+{% load i18n static unfold %}
+{% block bodyclass %}{{ block.super }}bg-base-50 login dark:bg-base-900{% endblock %}
+{% block usertools %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block title %}
+    {{ title }} | {{ site_title }}
+{% endblock %}
+{% block base %}
+    <div id="page" class="flex min-h-screen dark:bg-base-900" 
+         style="background-image: url('{% static 'img/Background.jpeg' %}'); background-size: cover; background-position: center;">
+        
+        {# Dark overlay para readable ang form #}
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        <div class="flex grow items-center justify-center w-full mx-auto px-4 relative z-10">
+            <div class="w-full max-w-sm mx-auto bg-white/90 dark:bg-base-900/90 rounded-xl p-8 shadow-xl backdrop-blur">
+                {% block content %}{% endblock %}
+            </div>
+            {% include "unfold/helpers/unauthenticated_header.html" %}
+        </div>
+    </div>
+{% endblock %}

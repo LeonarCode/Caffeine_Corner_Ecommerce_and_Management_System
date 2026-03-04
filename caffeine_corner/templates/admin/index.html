@@ -1,0 +1,25 @@
+{% extends 'admin/base.html' %}
+
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% if subtitle %}
+        {{ subtitle }} |
+    {% endif %}
+
+    {{ title }} | {{ site_title|default:_('Caffeine Corner admin') }}
+{% endblock %}
+
+{% block branding %}
+    <div class="flex items-center gap-3 px-4 py-3">
+        <img src="{% static 'img/Logo.jpg' %}" 
+            alt="Logo"
+            class="h-9 w-auto rounded-md shadow">
+
+        <span class="text-md font-bold tracking-wide font-montserrat">
+            CAFFEINE CORNER Admin
+        </span>
+    </div>
+{% endblock %}
+

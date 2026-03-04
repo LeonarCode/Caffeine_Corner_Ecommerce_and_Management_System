@@ -24,3 +24,4 @@ class InventoryAdmin(ImportExportModelAdmin):
     list_filter = ('category',)
     import_form_class = ImportForm
     export_form_class = ExportForm
+

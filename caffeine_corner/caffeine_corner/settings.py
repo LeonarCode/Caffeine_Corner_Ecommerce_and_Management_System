@@ -92,8 +92,8 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
         'APP': {
-            'client_id': 'YOUR_GOOGLE_CLIENT_ID',
-            'secret': 'YOUR_GOOGLE_CLIENT_SECRET',
+            'client_id': os.getenv("GOOGLE_CLIENT_ID"),
+            'secret': os.getenv("GOOGLE_CLIENT_SECRET"),
             'key': '',
         },
     },
@@ -113,8 +113,8 @@ SOCIALACCOUNT_PROVIDERS = {
         'VERIFIED_EMAIL': False,
         'VERSION': 'v17.0',
         'APP': {
-            'client_id': 'YOUR_FACEBOOK_APP_ID',
-            'secret': 'YOUR_FACEBOOK_APP_SECRET',
+            'client_id': os.getenv("FB_APP_ID"),
+            'secret': os.getenv("FB_APP_SECRET"),
             'key': '',
         },
     },
@@ -213,6 +213,26 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
 
 UNFOLD = {
-    "SITE_HEADER": "Caffeine Corner Admin",
+    "DASHBOARD_CALLBACK": "inventory.views.dashboard_callback",
+    "SITE_TITLE": "CAFFEINE CORNER Admin",
+    "COLORS": {
+        "primary": {
+            "50": "250 245 235",   # lightest
+            "100": "245 235 215",
+            "200": "235 215 180",
+            "300": "210 175 130",
+            "400": "185 140 90",
+            "500": "160 105 55",   # main brand color (coffee brown)
+            "600": "130 80 35",
+            "700": "100 60 20",
+            "800": "75 45 15",
+            "900": "50 30 10",
+            "950": "30 15 5",      # darkest
+        },
+    },
+    "LOGIN": {
+        "image": "img/Background.jpg",  # background image sa login page
+        "redirect_after": "/admin/",
+    },
 }
 

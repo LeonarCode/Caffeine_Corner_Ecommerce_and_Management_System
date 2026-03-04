@@ -1,0 +1,36 @@
+{% load unfold static %}
+<style>
+    @font-face {
+        font-family: 'MyFont';
+        src: url("{% static 'font/Montserrat-ExtraBold.ttf' %}");
+    }
+</style>
+<div class="border-b border-base-200 flex gap-3 items-center h-[65px] mb-6 dark:border-base-800 px-3 {% element_classes 'navigation_header' %}" {% if site_dropdown %}x-data="{ openDropdown: false }"{% endif %} style="background-color: #6F4E37;">
+    <div class="bg-transparent flex font-semibold gap-3 grow min-w-0 h-[64px] items-center px-3 {% if site_dropdown %}cursor-pointer transition-all -mx-3 px-6 hover:bg-base-100 dark:hover:bg-white/[.06]{% endif %}"
+         {% if site_dropdown %}
+             x-on:click="openDropdown = !openDropdown"
+             x-bind:class="{'bg-base-100 dark:bg-white/[.06]': openDropdown, 'bg-transparent': !openDropdown}"
+         {% endif %}
+    >
+        <div class="flex items-center gap-2 flex-row">
+            <img src="{% static 'img/Logo.jpg' %}" alt="Logo" class="h-8 mr-2 rounded-lg" />
+            <span style="color: #FFF5E4; font-family: 'MyFont', serif; font-size: 1.0rem; letter-spacing: 0.08em;">
+                <p>CAFFEINE</p>
+                <p>CORNER</p>
+            </span>
+            <span style="color: #FFF5E4; font-family: 'MyFont', serif; font-size: 1.0rem;">Admin</span>
+        </div>
+
+        {% if site_dropdown %}
+            <span class="material-symbols-outlined ml-auto select-none text-font-default-light dark:text-font-default-dark">
+                unfold_more
+            </span>
+        {% endif %}
+    </div>
+    <span class="material-symbols-outlined block cursor-pointer h-[18px] xl:hidden! hover:text-base-700 dark:hover:text-base-200" 
+          x-on:click="sidebarMobileOpen = !sidebarMobileOpen"
+          style="color: #FFF5E4;">
+        close
+    </span>
+    {% include "unfold/helpers/site_dropdown.html" %}
+</div>

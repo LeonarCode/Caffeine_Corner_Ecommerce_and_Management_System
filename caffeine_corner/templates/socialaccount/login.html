@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}
+    {{ title }} | {{ site_title }}
+{% endblock %}
+{% block content %}
+<div class="h-[calc(100vh-88px)] bg-cover bg-center flex flex-col justify-center items-center" style="background-image: url('{% static "img/Background.jpeg" %}');">
+    <div class="w-[350px] sm:w-[1000px] flex flex-col items-center justify-center bg-coffee/70 backdrop-blur-md rounded-[40px] text-center p-10 gap-y-5">
+        <div class="flex flex-row items-center gap-x-4 self-start mb-8">
+                <a href="{% url 'signin'%}" class="flex flex-row self-start text-white text-2xl font-bold items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 mr-1">
+                        <path fill-rule="evenodd" d="M11.03 3.97a.75.75 0 0 1 0 1.06l-6.22 6.22H21a.75.75 0 0 1 0 1.5H4.81l6.22 6.22a.75.75 0 1 1-1.06 1.06l-7.5-7.5a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+                <h2 class="text-xl sm:text-2xl text-white ml-10 sm:ml-83">Sign In Via 
+                    <span>
+                        {% if provider.name == "Google" %}
+                            <img src="{% static 'img/Google.png' %}" alt="Google" class="h-10 w-18 sm:h-12 sm:w-20 inline-block">
+                        {% elif provider.name == "Facebook" %}
+                            <img src="{% static 'img/Facebook.png' %}" alt="Facebook" class="h-10 w-16 sm:h-12 sm:w-18 ml-1 inline-block">
+                        {% endif %}
+                    </span>
+                </h2>
+            </div>
+        <p class="text-white">You are about to sign in using a third-party account from {{ provider.name }}.</p>
+        <form method="post" action="{{ form.action_url }}" class="w-80 sm:w-150 gap-y-5 flex flex-col">
+            {% csrf_token %}
+            <button type="submit" class="bg-white py-2 w-full rounded-4xl text-lg text-coffee font-bold transform transition duration-300 hover:scale-110 mt-5 mb-8">Continue with {{ provider.name }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
