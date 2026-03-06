@@ -37,6 +37,7 @@
                         <p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>
                     {% endif %}
                 </div>
+                <a href="{% url 'password_reset' %}" class="text-white text-end text-lg font-semibold">Forgot Password?</a>
                 <button type="submit" class="bg-white py-2 w-full rounded-4xl text-lg text-coffee font-bold transform transition duration-300 hover:scale-110 mt-5 mb-8">Sign Up</button>
             </form>
         </div>

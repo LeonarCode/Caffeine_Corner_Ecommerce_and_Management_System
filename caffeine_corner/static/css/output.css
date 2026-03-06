@@ -18,8 +18,6 @@
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-sm: 24rem;
-    --container-3xl: 48rem;
-    --container-4xl: 56rem;
     --container-7xl: 80rem;
     --text-sm: 0.875rem;
     --text-sm--line-height: calc(1.25 / 0.875);
@@ -51,7 +49,6 @@
     --font-montserrat: 'MontserratExtrabold', sans-serif;
     --font-arial: 'ArialFont', sans-serif;
     --color-coffee: #6F4E37;
-    --color-light-coffee: #C0A080;
   }
 }
 @layer base {
@@ -248,24 +245,6 @@
   .z-50 {
     z-index: 50;
   }
-  .container {
-    width: 100%;
-    @media (width >= 40rem) {
-      max-width: 40rem;
-    }
-    @media (width >= 48rem) {
-      max-width: 48rem;
-    }
-    @media (width >= 64rem) {
-      max-width: 64rem;
-    }
-    @media (width >= 80rem) {
-      max-width: 80rem;
-    }
-    @media (width >= 96rem) {
-      max-width: 96rem;
-    }
-  }
   .m-4 {
     margin: calc(var(--spacing) * 4);
   }
@@ -326,12 +305,6 @@
   .ml-10 {
     margin-left: calc(var(--spacing) * 10);
   }
-  .ml-15 {
-    margin-left: calc(var(--spacing) * 15);
-  }
-  .ml-18 {
-    margin-left: calc(var(--spacing) * 18);
-  }
   .ml-20 {
     margin-left: calc(var(--spacing) * 20);
   }
@@ -346,9 +319,6 @@
   }
   .grid {
     display: grid;
-  }
-  .hidden {
-    display: none;
   }
   .inline-block {
     display: inline-block;
@@ -429,9 +399,6 @@
   }
   .w-full {
     width: 100%;
-  }
-  .max-w-3xl {
-    max-width: var(--container-3xl);
   }
   .max-w-7xl {
     max-width: var(--container-7xl);
@@ -672,6 +639,9 @@
   .text-center {
     text-align: center;
   }
+  .text-end {
+    text-align: end;
+  }
   .font-arial {
     font-family: var(--font-arial);
   }
@@ -706,10 +676,6 @@
   }
   .text-\[20px\] {
     font-size: 20px;
-  }
-  .leading-4 {
-    --tw-leading: calc(var(--spacing) * 4);
-    line-height: calc(var(--spacing) * 4);
   }
   .leading-\[1\.4\] {
     --tw-leading: 1.4;
@@ -931,6 +897,11 @@
       margin-left: calc(var(--spacing) * 10);
     }
   }
+  .sm\:ml-80 {
+    @media (width >= 40rem) {
+      margin-left: calc(var(--spacing) * 80);
+    }
+  }
   .sm\:ml-83 {
     @media (width >= 40rem) {
       margin-left: calc(var(--spacing) * 83);
@@ -939,21 +910,6 @@
   .sm\:ml-85 {
     @media (width >= 40rem) {
       margin-left: calc(var(--spacing) * 85);
-    }
-  }
-  .sm\:ml-90 {
-    @media (width >= 40rem) {
-      margin-left: calc(var(--spacing) * 90);
-    }
-  }
-  .sm\:ml-93 {
-    @media (width >= 40rem) {
-      margin-left: calc(var(--spacing) * 93);
-    }
-  }
-  .sm\:ml-94 {
-    @media (width >= 40rem) {
-      margin-left: calc(var(--spacing) * 94);
     }
   }
   .sm\:ml-95 {
@@ -1065,6 +1021,12 @@
       line-height: var(--tw-leading, var(--text-lg--line-height));
     }
   }
+  .sm\:text-xl {
+    @media (width >= 40rem) {
+      font-size: var(--text-xl);
+      line-height: var(--tw-leading, var(--text-xl--line-height));
+    }
+  }
   .sm\:text-\[28px\] {
     @media (width >= 40rem) {
       font-size: 28px;
@@ -1080,19 +1042,9 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
-  .xl\:block {
-    @media (width >= 80rem) {
-      display: block;
-    }
-  }
   .xl\:hidden\! {
     @media (width >= 80rem) {
       display: none !important;
-    }
-  }
-  .xl\:max-w-4xl {
-    @media (width >= 80rem) {
-      max-width: var(--container-4xl);
     }
   }
   .dark\:bg-white\/\[\.06\] {
@@ -1101,11 +1053,6 @@
       @supports (color: color-mix(in lab, red, red)) {
         background-color: color-mix(in oklab, var(--color-white) 6%, transparent);
       }
-    }
-  }
-  .dark\:text-light-coffee {
-    @media (prefers-color-scheme: dark) {
-      color: var(--color-light-coffee);
     }
   }
   .dark\:hover\:bg-white\/\[\.06\] {
