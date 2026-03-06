@@ -6,35 +6,89 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <title>{% block title %}Caffeine Corner{% endblock %}</title>
+    <style>
+        .search-desktop {
+            display: flex;
+            position: relative;
+            flex-direction: row;
+            align-items: center;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            padding-left: 16px;
+            padding-right: 16px;
+            background-color: white;
+            border-radius: 9999px;
+        }
+        .search-mobile-btn {
+            display: none;
+        }
+        .search-mobile{
+            display: none;
+            top: 100%;
+            background-color: white;
+            border-radius: 9999px;
+            padding-left: 16px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            padding-right: 16px;
+            width: 300px;
+            justify-self: center;
+        }
+        .show-search-mobile {
+            display: flex;
+        }
+        @media (max-width: 640px) {
+            .search-desktop {
+                display: none;
+            }
+            .search-mobile-btn {
+                display: block;
+                color: white;
+            }
+        }
+    </style>
     {% block styles %}{% endblock %}
 </head>
 <body>
-    <header class="bg-coffee fixed-top">
-        <div class="flex flex-row p-3 items-center justify-between">
+    <header class="bg-coffee fixed-top pb-2">
+        <div class="flex flex-row py-3 px-10 sm:px-30 items-center justify-between">
             <div class="flex flex-row items-center">
-                <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-16 w-16 rounded-full ml-5 sm:ml-10">
+                <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-16 w-16 rounded-full">
                 <div class="ml-5">
                     <h2 class="text-white text-md sm:text-lg font-montserrat font-bold tracking-widest">CAFFEINE</h2>
                     <h2 class="text-white text-md sm:text-lg font-montserrat font-bold tracking-widest">CORNER</h2>
                 </div>
             </div>
             {% if search_bar|default:False %}
-            <div class="relative bg-white flex flex-row items-center rounded-full px-4 py-1">
+            <div class="search-desktop">
                 <button type="button" class="mr-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                     </svg>
                 </button>
-                <input type="text" class="w-35 h-4 sm:w-70 sm:h-10 focus:placeholder-transparent" placeholder="Search for products"/>
+                <input type="text" class="w-70 h-10 focus:placeholder-transparent" placeholder="Search for products"/>
             </div>
+            <button class="search-mobile-btn" onclick="showSearchMobile()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </button>
             {% endif %}
             {% if signUp|default:False %}
                 {% if user.is_authenticated %}
-                    <a href="{% url 'logout' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl mr-20">Logout</a>
+                    <a href="{% url 'logout' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl">Logout</a>
                 {% else %}
-                    <a href="{% url 'signin' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl mr-20">Sign In</a>
+                    <a href="{% url 'signin' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl">Sign In</a>
                 {% endif %}
             {% endif %}
+        </div>
+        <div class="search-mobile">
+            <button type="button" class="mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </button>
+            <input type="text" class="w-full h-10 focus:placeholder-transparent" placeholder="Search for products"/>
         </div>
     </header>
     <div>
@@ -44,6 +98,10 @@
         {% include 'home/footer.html' %}
     {% endif %}
     <script>
+        function showSearchMobile() {
+            const searchMobile = document.querySelector('.search-mobile');
+            searchMobile.classList.toggle('show-search-mobile');
+        }
     </script>
 </body>
 </html>
