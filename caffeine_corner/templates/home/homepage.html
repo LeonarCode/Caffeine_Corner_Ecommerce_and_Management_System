@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Home{% endblock %}
 
@@ -53,27 +54,62 @@
                 </div>
             </div>
         </div>
-        <div class="flex flex-row gap-4 self-end mr-5 mt-5">
-            <a href="{% url 'home' %}" class="cat-pill active">All</a>
-            {% for category in categories %}
-                <a href="{% url 'getbyCategory' category.id %}" class="cat-pill">{{ category.name }}</a>
-            {% endfor %}
-        </div>
-        <div>
-            {% for product in products %}
-                <a href="#">
-                    <span>
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                        <h3>{{ product.name }}</h3>
-                        <p>&#8369;{{ product.price }}</p>
-                    </span>
-                </a>
-            {% endfor %}
-            {% if not show_all %}
-                <a href="?all=true">See All</a>
-            {% else %}
-                <a href="?">Show Less</a>
-            {% endif %}
+        <div class="max-w-7xl m-auto mt-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-10 gap-6">
+                <div>
+                    <h1 class="text-4xl font-bold text-coffee">Discover Your Perfect Brew</h1>
+                    <p class="text-lg text-gray-600 mt-2">Explore our curated selection of premium coffee blends</p>
+                </div>
+                <div class="flex gap-3 flex-wrap">
+                    <a href="{% url 'home' %}" class="cat-pill active">All</a>
+                    {% for category in categories %}
+                        <a href="{% url 'getbyCategory' category.id %}" class="cat-pill">{{ category.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for product in products %}
+                    
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        <div >
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover rounded-lg">
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold text-gray-800">{{ product.name }}</h3>
+                            <p class="text-gray-600 mt-1">{{ product.description }}</p>
+                            <span>
+                                {% for i in "12345" %}
+                                    {% if i|to_int <= product.average_rating|to_float %}
+                                        <span class="text-yellow-400">★</span>
+                                    {% else %}
+                                        <span class="text-gray-300">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                                ({{ product.average_rating|to_float|default:"No ratings" }} reviews)
+                            </span>
+                        </div>
+                        <div class="p-4 flex-row">
+                            <p class="text-2xl font-bold text-coffee">&#8369;{{ product.price|floatformat:2 }}</p>
+                            <button type="button" class="ml-4 bg-coffee text-white py-2 px-4 rounded-lg hover:bg-dark-coffee transition-colors duration-300">+ Buy</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="mt-6 text-center">
+                {% if not show_all %}
+                    <a href="?all=true">See All</a>
+                {% else %}
+                    <a href="?">Show Less</a>
+                {% endif %}
+            </div>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('.cat-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+            });
+        });
+    </script>
 {% endblock %}

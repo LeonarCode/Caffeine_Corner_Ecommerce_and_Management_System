@@ -76,9 +76,9 @@
             {% endif %}
             {% if signUp|default:False %}
                 {% if user.is_authenticated %}
-                    <a href="{% url 'logout' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl">Logout</a>
+                    <a href="{% url 'logout' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl hover:scale-110">Logout</a>
                 {% else %}
-                    <a href="{% url 'signin' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl">Sign In</a>
+                    <a href="{% url 'signin' %}" class="text-sm sm:text-lg py-1 px-4 bg-white text-coffee rounded-4xl hover:scale-110">Sign In</a>
                 {% endif %}
             {% endif %}
         </div>

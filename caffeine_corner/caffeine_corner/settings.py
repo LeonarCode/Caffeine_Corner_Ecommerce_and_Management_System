@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'api',
     'registration',
     'inventory',
+    'core',
 ]
 
 MIDDLEWARE = [

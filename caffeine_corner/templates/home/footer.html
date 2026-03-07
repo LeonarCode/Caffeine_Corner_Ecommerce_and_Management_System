@@ -1,17 +1,26 @@
-
-<footer>
-    {% load static %}
-    <div>
-        <div class="flex flex-col items-center">
-            <div class="flex flex-row items-center">
-                <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-16 w-16 rounded-full">
-                <div class="flex flex-col">
-                    <h2 class="text-white text-lg font-montserrat font-bold tracking-widest">Caffeine</h2>
-                    <h2 class="text-white text-lg font-montserrat font-bold tracking-widest">Corner</h2>
+{% load static %}
+<footer class="bg-dark-coffee mt-5 py-5">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-10">
+            <div class="flex flex-col items-start gap-5">
+                <div class="flex flex-row items-center">
+                    <img src="{% static 'img/Logo.jpg' %}" alt="Caffeine Corner Logo" class="h-16 w-16 rounded-full mr-3 self-start">
+                    <div class="flex flex-col">
+                        <h2 class="text-white text-lg font-montserrat font-bold tracking-widest">CAFFIENE</h2>
+                        <h2 class="text-white text-lg font-montserrat font-bold tracking-widest">CORNER</h2>
+                    </div>
+                </div>
+                <div class="w-50 text-light-coffee">
+                    <p>Crafted for coffee lovers - Caffeine Corner serves quality, flavor, and comfort in every cup</p>
                 </div>
             </div>
-        </div>
-        <div>
+            <div>
+                <h3 class="text-white text-lg font-bold mt-5 mb-2">Follow Us</h3>
+                <div class="gap-4">
+                    <a href="#" class="text-light-coffee hover:text-white transition-colors duration-300"><i class="fab fa-facebook fa-lg">Facebook</i></a>
+                    <a href="#" class="text-light-coffee hover:text-white transition-colors duration-300"><i class="fab fa-instagram fa-lg">Instagram</i></a>
+                </div>
+            </div>
         </div>
     </div>
 </footer>

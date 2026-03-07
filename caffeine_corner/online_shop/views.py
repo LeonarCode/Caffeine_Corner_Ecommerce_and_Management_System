@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Product, Category, Variant
+from .models import Product, Category, Variant, Rating
 from django.contrib.auth.models import User
 
 # Create your views here.
@@ -10,6 +10,7 @@ def welcome(request):
 def home(request):
     products = Product.objects.filter(is_available=True).order_by('sort_order')
     categories = Category.objects.filter(is_active=True).order_by('sort_order')
+    ratings = Rating.objects.select_related('product').all()
     user = request.user if request.user.is_authenticated else None
     show_all = request.GET.get("all")
 
