@@ -1,0 +1,371 @@
+{% load custom_filters %}
+<!--|
+    BUY MODAL — drop this template anywhere and call:
+      openBuyModal({ name, price, image, description, rating })
+    to open it. Wire your own submit logic inside handleConfirmBuy().
+|-->
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+    .font-display { font-family: 'Playfair Display', serif; }
+    body, * { font-family: 'Lato', sans-serif; }
+
+    /* Backdrop blur fallback */
+    @supports not (backdrop-filter: blur(8px)) {
+        #buy-backdrop { background: rgba(44,21,3,0.85) !important; }
+    }
+
+    /* Modal slide-up */
+    @keyframes modal-in {
+        from { opacity: 0; transform: translateY(32px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes modal-out {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to   { opacity: 0; transform: translateY(24px) scale(0.97); }
+    }
+    #buy-modal.open  { animation: modal-in  0.32s cubic-bezier(0.34,1.4,0.64,1) forwards; }
+    #buy-modal.close { animation: modal-out 0.22s ease forwards; }
+
+    /* Backdrop fade */
+    @keyframes bd-in  { from { opacity:0 } to { opacity:1 } }
+    @keyframes bd-out { from { opacity:1 } to { opacity:0 } }
+    #buy-backdrop.open  { animation: bd-in  0.25s ease forwards; }
+    #buy-backdrop.close { animation: bd-out 0.22s ease forwards; }
+
+    /* Qty button pulse */
+    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+    .qty-pop { animation: pop 0.2s ease; }
+
+    /* Success checkmark draw */
+    @keyframes draw {
+        from { stroke-dashoffset: 60; }
+        to   { stroke-dashoffset: 0; }
+    }
+    .check-path {
+        stroke-dasharray: 60;
+        stroke-dashoffset: 60;
+        animation: draw 0.45s ease 0.1s forwards;
+    }
+
+    /* Image parallax on hover */
+    #modal-img { transition: transform 0.5s ease; }
+    #modal-img-wrap:hover #modal-img { transform: scale(1.06); }
+</style>
+
+<!-- ── BACKDROP ─────────────────────────────────── -->
+<div id="buy-backdrop"
+     class="fixed inset-0 z-40 hidden bg-[#2C1503]/70 backdrop-blur-sm"
+     onclick="closeBuyModal()">
+</div>
+
+<!-- ── MODAL ────────────────────────────────────── -->
+<div id="buy-modal"
+     class="fixed z-50 hidden
+            bottom-0 left-0 right-0
+            sm:bottom-auto sm:top-1/2 sm:left-1/2
+            sm:-translate-x-1/2 sm:-translate-y-1/2
+            w-full sm:max-w-lg
+            bg-[#FDF9F4] rounded-t-3xl sm:rounded-2xl
+            shadow-[0_32px_80px_rgba(44,21,3,0.3)]
+            overflow-hidden"
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+    <!-- Drag handle (mobile) -->
+    <div class="flex justify-center pt-3 pb-1 sm:hidden">
+        <div class="w-10 h-1 rounded-full bg-[#6f4e37]/25"></div>
+    </div>
+
+    <!-- Product image strip -->
+    <div id="modal-img-wrap"
+         class="relative h-52 sm:h-56 overflow-hidden bg-[#EDE0CC]">
+        <img id="modal-img" src="" alt=""
+             class="w-full h-full object-cover">
+        <!-- gradient -->
+        <div class="absolute inset-0 bg-gradient-to-t from-[#2C1503]/50 via-transparent to-transparent"></div>
+
+        <!-- Close button -->
+        <button onclick="closeBuyModal()"
+                class="absolute top-3 right-3
+                       w-8 h-8 flex items-center justify-center
+                       bg-white/80 backdrop-blur-sm text-[#2C1503]
+                       rounded-full text-lg font-bold leading-none
+                       hover:bg-white transition-colors duration-200"
+                aria-label="Close">
+            ✕
+        </button>
+
+        <!-- Category chip (optional) -->
+        <div class="absolute bottom-3 left-4
+                    bg-[#2C1503]/80 backdrop-blur-sm text-[#C4A882]
+                    text-[0.6rem] font-bold tracking-widest uppercase
+                    px-3 py-1 rounded-full">
+            Premium Blend
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="px-6 pt-5 pb-2">
+
+        <!-- Name + stars row -->
+        <div class="flex items-start justify-between gap-3 mb-1">
+            <h2 id="modal-title"
+                class="font-display text-[#2C1503] text-2xl font-bold leading-tight"></h2>
+            <div id="modal-stars" class="flex gap-0.5 shrink-0 pt-1"></div>
+        </div>
+
+        <p id="modal-desc"
+           class="text-[#8a7060] text-sm font-light leading-relaxed mb-5"></p>
+
+        <!-- Divider -->
+        <div class="h-px bg-[#6f4e37]/10 mb-5"></div>
+
+        <!-- Quantity + price row -->
+        <div class="flex items-center justify-between gap-4 mb-6">
+
+            <!-- Qty selector -->
+            <div class="flex items-center gap-3">
+                <span class="text-[#8a7060] text-xs font-bold tracking-widest uppercase">Qty</span>
+                <div class="flex items-center gap-2 bg-[#EDE0CC]/60 rounded-xl px-1 py-1">
+                    <button id="btn-minus"
+                            onclick="changeQty(-1)"
+                            class="w-8 h-8 flex items-center justify-center
+                                   bg-white text-[#2C1503] font-bold text-lg
+                                   rounded-lg shadow-sm
+                                   hover:bg-[#6f4e37] hover:text-white
+                                   transition-all duration-150 active:scale-90">
+                        −
+                    </button>
+                    <span id="modal-qty"
+                          class="font-display text-[#2C1503] font-bold text-xl w-7 text-center select-none">
+                        1
+                    </span>
+                    <button id="btn-plus"
+                            onclick="changeQty(1)"
+                            class="w-8 h-8 flex items-center justify-center
+                                   bg-white text-[#2C1503] font-bold text-lg
+                                   rounded-lg shadow-sm
+                                   hover:bg-[#6f4e37] hover:text-white
+                                   transition-all duration-150 active:scale-90">
+                        +
+                    </button>
+                </div>
+            </div>
+
+            <!-- Total price -->
+            <div class="text-right">
+                <p class="text-[#8a7060] text-[0.65rem] font-bold tracking-widest uppercase mb-0.5">Total</p>
+                <p id="modal-total"
+                   class="font-display text-[#6f4e37] text-3xl font-bold tracking-tight transition-all duration-200"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA footer -->
+    <div class="px-6 pb-7 pt-1 flex flex-col gap-3">
+        <button id="btn-confirm"
+                onclick="handleConfirmBuy()"
+                class="group w-full relative overflow-hidden
+                       bg-[#2C1503] text-[#C4A882]
+                       font-bold text-sm tracking-widest uppercase
+                       py-4 rounded-2xl
+                       hover:bg-[#6f4e37] hover:text-white
+                       transition-all duration-300 active:scale-[0.98]
+                       flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            <span id="btn-confirm-label">Confirm Order</span>
+        </button>
+
+        <button onclick="closeBuyModal()"
+                class="w-full text-[#8a7060] text-xs font-bold tracking-widest uppercase
+                       py-2 rounded-2xl border-2 border-transparent
+                       hover:border-[#6f4e37]/25 hover:text-[#6f4e37]
+                       transition-all duration-200">
+            Maybe Later
+        </button>
+    </div>
+
+    <!-- ── SUCCESS STATE (hidden by default) ── -->
+    <div id="modal-success"
+         class="absolute inset-0 bg-[#FDF9F4] flex flex-col items-center justify-center gap-4
+                opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+            <svg class="w-10 h-10 text-green-600" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path class="check-path" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <div class="text-center">
+            <p class="font-display text-[#2C1503] text-2xl font-bold mb-1">Order Placed!</p>
+            <p class="text-[#8a7060] text-sm font-light">Your coffee is on its way ☕</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── State ──────────────────────────────────
+    let _price  = 0;
+    let _qty    = 1;
+    let _product = null;
+
+    // ── Open ───────────────────────────────────
+    function openBuyModal(product) {
+        /*
+          product = { name, price, image, description, rating }
+          price should be a number (e.g. 250.00)
+        */
+        _product = product;
+        _qty     = 1;
+        _price   = parseFloat(product.price);
+
+        document.getElementById('modal-img').src = product.image;
+        document.getElementById('modal-img').alt = product.name;
+        document.getElementById('modal-title').textContent = product.name;
+        document.getElementById('modal-desc').textContent  = product.description;
+
+        // Stars
+        const starsEl = document.getElementById('modal-stars');
+        starsEl.innerHTML = '';
+        const rating = parseFloat(product.rating) || 0;
+        for (let i = 1; i <= 5; i++) {
+            const s = document.createElement('span');
+            s.textContent = '★';
+            s.className = i <= rating
+                ? 'text-amber-400 text-base'
+                : 'text-[#DDD3C7] text-base';
+            starsEl.appendChild(s);
+        }
+
+        updateTotal();
+        resetConfirmBtn();
+        document.getElementById('modal-success').classList.replace('opacity-100','opacity-0');
+        document.getElementById('modal-success').classList.add('pointer-events-none');
+
+        // Show
+        const backdrop = document.getElementById('buy-backdrop');
+        const modal    = document.getElementById('buy-modal');
+        backdrop.classList.remove('hidden');
+        modal.classList.remove('hidden');
+        // Force reflow then animate
+        requestAnimationFrame(() => {
+            backdrop.classList.replace('close','open');
+            modal.classList.replace('close','open');
+        });
+        document.body.style.overflow = 'hidden';
+    }
+
+    // ── Close ──────────────────────────────────
+    function closeBuyModal() {
+        const backdrop = document.getElementById('buy-backdrop');
+        const modal    = document.getElementById('buy-modal');
+        backdrop.classList.replace('open','close');
+        modal.classList.replace('open','close');
+        setTimeout(() => {
+            backdrop.classList.add('hidden');
+            modal.classList.add('hidden');
+            modal.classList.remove('close');
+            backdrop.classList.remove('close');
+        }, 240);
+        document.body.style.overflow = '';
+    }
+
+    // ── Qty ────────────────────────────────────
+    function changeQty(delta) {
+        _qty = Math.max(1, _qty + delta);
+        const qtyEl = document.getElementById('modal-qty');
+        qtyEl.textContent = _qty;
+        qtyEl.classList.remove('qty-pop');
+        void qtyEl.offsetWidth; // reflow
+        qtyEl.classList.add('qty-pop');
+        document.getElementById('btn-minus').disabled = _qty <= 1;
+        document.getElementById('btn-minus').classList.toggle('opacity-40', _qty <= 1);
+        updateTotal();
+    }
+
+    function updateTotal() {
+        const total = (_price * _qty).toFixed(2);
+        document.getElementById('modal-total').textContent = '₱' + total;
+    }
+
+    // ── Confirm ────────────────────────────────
+    function handleConfirmBuy() {
+        /*
+        ┌──────────────────────────────────────────────────────────────┐
+        │  IMPLEMENT YOUR OWN LOGIC HERE                               │
+        │  Available:  _product  (the product object passed in)        │
+        │              _qty      (selected quantity)                   │
+        │              _price    (unit price as float)                 │
+        │                                                              │
+        │  Example:                                                    │
+        │    fetch('/cart/add/', {                                     │
+        │      method: 'POST',                                         │
+        │      headers: { 'X-CSRFToken': getCookie('csrftoken'),       │
+        │                 'Content-Type': 'application/json' },        │
+        │      body: JSON.stringify({                                   │
+        │        product_id: _product.id,                              │
+        │        quantity:   _qty                                      │
+        │      })                                                      │
+        │    }).then(() => showSuccess());                             │
+        └──────────────────────────────────────────────────────────────┘
+        */
+        fetch(`{% url 'buyProduct' _product.id %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                product_id: _product.id,
+                quantity: _qty
+            })
+        }).then(() => showSuccess()).catch((error) => {
+            console.error('Error:', error);
+            showError('An error occurred while placing your order. Please try again.');
+        });
+        // For now — show success UI
+        showSuccess();
+    }
+
+    function showSuccess() {
+        const successEl = document.getElementById('modal-success');
+        successEl.classList.remove('pointer-events-none');
+        successEl.classList.replace('opacity-0','opacity-100');
+        // Re-trigger check animation
+        const path = successEl.querySelector('.check-path');
+        path.style.animation = 'none';
+        void path.offsetWidth;
+        path.style.animation = '';
+        // Auto-close after 1.8s
+        setTimeout(closeBuyModal, 1800);
+    }
+
+    function resetConfirmBtn() {
+        const btn   = document.getElementById('btn-confirm');
+        const label = document.getElementById('btn-confirm-label');
+        label.textContent = 'Confirm Order';
+        btn.disabled = false;
+        btn.classList.remove('opacity-60');
+    }
+    function showError(message) {
+        const errorEl = document.getElementById('modal-error');
+        errorEl.classList.remove('opacity-0', 'pointer-events-none');
+        errorEl.classList.add('opacity-100');
+        errorEl.textContent = message;
+        setTimeout(() => {
+            errorEl.classList.remove('opacity-100', 'pointer-events-none');
+            errorEl.classList.add('opacity-0');
+            errorEl.textContent = '';
+        }, 3000);
+    }
+    // ── Keyboard close ─────────────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeBuyModal();
+    });
+</script>

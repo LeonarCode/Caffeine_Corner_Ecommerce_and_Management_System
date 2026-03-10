@@ -115,6 +115,55 @@ class Rating(models.Model):
         return f"{self.product.name} - {self.rating} stars by {self.user.username}"
 
 
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(9999)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = "Order"
+        verbose_name_plural = "Orders"
+        indexes = [
+            models.Index(fields=["user", "product", "variant"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} ({self.variant.size}) x {self.quantity}"
+    def clean(self):
+        if self.variant is None and self.user_id and self.product_id:
+            existing = Order.objects.filter(user_id=self.user_id, product_id=self.product_id, variant__isnull=True)
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            if existing.exists():
+                from django.core.exceptions import ValidationError
+                raise ValidationError("An order for this product without a variant already exists for this user.")
+        if self.variant is not None and self.user_id and self.product_id:
+            existing = Order.objects.filter(user_id=self.user_id, product_id=self.product_id, variant_id=self.variant_id)
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            if existing.exists():
+                from django.core.exceptions import ValidationError
+                raise ValidationError("An order for this product with a variant already exists for this user.")
+        if self.quantity < 1 or self.quantity > 9999:
+            raise ValidationError("Quantity must be between 1 and 9999.")
+        if self.product.is_available is False:
+            raise ValidationError("Product is not available.")
+        if self.product.is_featured is False:
+            raise ValidationError("Product is not featured.")
+        if self.product.is_seasonal is False:
+            raise ValidationError("Product is not seasonal.")
+        if self.product.category.is_active is False:
+            raise ValidationError("Category is not active.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+        return self
+
 class CartItem(models.Model):
     """Cart items for MySQL-safe uniqueness.
 

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .models import Product, Category, Variant, Rating
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 
 # Create your views here.
 
@@ -40,3 +41,13 @@ def getbyCategory(request, category_id):
     }
     return render(request, 'home/homepage.html', context)
 
+def buyProduct(request, product_id):
+    product = Product.objects.get(id=product_id)
+    data = {
+        'name': product.name,
+        'price': product.price,
+        'image': product.image.url,
+        'description': product.description,
+        'rating': product.average_rating,
+    }
+    return JsonResponse(data)

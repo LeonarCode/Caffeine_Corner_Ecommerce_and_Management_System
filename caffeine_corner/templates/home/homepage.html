@@ -4,112 +4,284 @@
 {% block title %}Home{% endblock %}
 
 {% block styles %}
-    <style>
-        .cat-pill{
-            background-color: white;
-            color: #6f4e37;
-            padding: 0.5rem 1rem;
-            border: 2px solid #6f4e37;
-            border-radius: 9999px;
-            font-weight: 500;
-        }
-        .cat-pill:hover, .cat-pill.active {
-            background-color: #6f4e37;
-            color: white;
-        }
-    </style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+    /* Only things Tailwind cannot express */
+    body { font-family: 'Lato', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fade-up 0.5s ease forwards; }
+
+    @keyframes ripple {
+        to { transform: scale(4); opacity: 0; }
+    }
+    .ripple-el {
+        position: absolute; border-radius: 9999px;
+        background: rgba(196,168,130,0.45);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+
+    /* Stagger delays */
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
+    .delay-8 { animation-delay: 0.40s; }
+</style>
 {% endblock %}
 
 {% block content %}
-    <div class="flex flex-col">
-        <div class="bg-[#3D1F00] text-[#C4A882]">
-            <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
-                <div class="flex items-center justify-center gap-4 px-6 py-8">
-                    <div class="text-3xl shrink-0">🌿</div>
-                    <div>
-                        <h2 class="text-lg font-bold font-sans">Ethnically Sourced</h2>
-                        <p class="font-sans leading-[1.4]">Direct trade with farmers</p>
-                    </div>
-                </div>
-                <div class="flex items-center justify-center gap-4 px-6 py-8">
-                    <div class="text-3xl shrink-0">🔬</div>
-                    <div>
-                        <h2 class="text-lg font-bold font-sans">Lab-Tested Quality</h2>
-                        <p class="font-sans leading-[1.4]">Every batch, guaranteed</p>
-                    </div>
-                </div>
-                <div class="flex items-center justify-center gap-4 px-6 py-8">
-                    <div class="text-3xl shrink-0">📦</div>
-                    <div>
-                        <h2 class="text-lg font-bold font-sans">Fast Shipping</h2>
-                        <p class="font-sans leading-[1.4]">Delivered within 24 hours</p>
-                    </div>
-                </div>
-                <div class="flex items-center justify-center gap-4 px-6 py-8">
-                    <div class="text-3xl shrink-0">♻️</div>
-                    <div>
-                        <h2 class="text-lg font-bold font-sans">Eco Packaging</h2>
-                        <p class="font-sans leading-[1.4]">Recyclable and biodegradable materials</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="max-w-7xl m-auto mt-8">
-            <div class="flex flex-col sm:flex-row items-center justify-between mb-10 gap-6">
+<div class="flex flex-col bg-[#FAF6F0] min-h-screen">
+
+    <!-- ── TRUST BANNER ──────────────────────────────── -->
+    <div class="bg-[#3D1F00] relative overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(196,168,130,0.10)_0%,transparent_65%)] pointer-events-none"></div>
+        <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4">
+            <div class="group flex items-center gap-4 px-6 py-8 border-r border-b border-white/10 hover:bg-[#C4A882]/10 transition-colors duration-300 cursor-default">
+                <span class="text-3xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">🌿</span>
                 <div>
-                    <h1 class="text-4xl font-bold text-coffee">Discover Your Perfect Brew</h1>
-                    <p class="text-lg text-gray-600 mt-2">Explore our curated selection of premium coffee blends</p>
-                </div>
-                <div class="flex gap-3 flex-wrap">
-                    <a href="{% url 'home' %}" class="cat-pill active">All</a>
-                    {% for category in categories %}
-                        <a href="{% url 'getbyCategory' category.id %}" class="cat-pill">{{ category.name }}</a>
-                    {% endfor %}
+                    <p class="font-display text-[#C4A882] font-semibold text-sm leading-tight mb-0.5">Ethically Sourced</p>
+                    <p class="text-[#C4A882]/55 text-xs font-light tracking-wide">Direct trade with farmers</p>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {% for product in products %}
-                    
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                        <div >
-                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover rounded-lg">
-                        </div>
-                        <div class="p-4">
-                            <h3 class="text-lg font-semibold text-gray-800">{{ product.name }}</h3>
-                            <p class="text-gray-600 mt-1">{{ product.description }}</p>
-                            <span>
-                                {% for i in "12345" %}
-                                    {% if i|to_int <= product.average_rating|to_float %}
-                                        <span class="text-yellow-400">★</span>
-                                    {% else %}
-                                        <span class="text-gray-300">★</span>
-                                    {% endif %}
-                                {% endfor %}
-                                ({{ product.average_rating|to_float|default:"No ratings" }} reviews)
-                            </span>
-                        </div>
-                        <div class="p-4 flex-row">
-                            <p class="text-2xl font-bold text-coffee">&#8369;{{ product.price|floatformat:2 }}</p>
-                            <button type="button" class="ml-4 bg-coffee text-white py-2 px-4 rounded-lg hover:bg-dark-coffee transition-colors duration-300">+ Buy</button>
-                        </div>
-                    </div>
-                {% endfor %}
+            <div class="group flex items-center gap-4 px-6 py-8 border-r border-b border-white/10 hover:bg-[#C4A882]/10 transition-colors duration-300 cursor-default">
+                <span class="text-3xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">🔬</span>
+                <div>
+                    <p class="font-display text-[#C4A882] font-semibold text-sm leading-tight mb-0.5">Lab-Tested Quality</p>
+                    <p class="text-[#C4A882]/55 text-xs font-light tracking-wide">Every batch, guaranteed</p>
+                </div>
             </div>
-            <div class="mt-6 text-center">
-                {% if not show_all %}
-                    <a href="?all=true">See All</a>
-                {% else %}
-                    <a href="?">Show Less</a>
-                {% endif %}
+            <div class="group flex items-center gap-4 px-6 py-8 border-r border-b border-white/10 hover:bg-[#C4A882]/10 transition-colors duration-300 cursor-default">
+                <span class="text-3xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">📦</span>
+                <div>
+                    <p class="font-display text-[#C4A882] font-semibold text-sm leading-tight mb-0.5">Fast Shipping</p>
+                    <p class="text-[#C4A882]/55 text-xs font-light tracking-wide">Delivered within 24 hours</p>
+                </div>
+            </div>
+            <div class="group flex items-center gap-4 px-6 py-8 border-b border-white/10 hover:bg-[#C4A882]/10 transition-colors duration-300 cursor-default">
+                <span class="text-3xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">♻️</span>
+                <div>
+                    <p class="font-display text-[#C4A882] font-semibold text-sm leading-tight mb-0.5">Eco Packaging</p>
+                    <p class="text-[#C4A882]/55 text-xs font-light tracking-wide">Recyclable & biodegradable</p>
+                </div>
             </div>
         </div>
     </div>
-    <script>
-        document.querySelectorAll('.cat-pill').forEach(pill => {
-            pill.addEventListener('click', () => {
-                document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-            });
+
+    <!-- ── MAIN CONTENT ──────────────────────────────── -->
+    <div class="max-w-6xl mx-auto w-full px-6 py-14">
+
+        <!-- Section header -->
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
+            <div>
+                <h1 class="font-display text-[#2C1503] text-4xl md:text-5xl font-bold leading-tight mb-2">
+                    Discover Your<br>
+                    <em class="text-[#6f4e37] italic">Perfect Brew</em>
+                </h1>
+                <p class="text-[#8a7060] text-xs font-light tracking-widest uppercase">Curated premium coffee blends</p>
+            </div>
+
+            <!-- Category pills -->
+            <div class="flex gap-2 flex-wrap shrink-0">
+                <a href="{% url 'home' %}"
+                   class="cat-pill px-5 py-2 rounded-full border-2 border-[#6f4e37] bg-[#6f4e37] text-white text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:opacity-90">
+                    All
+                </a>
+                {% for category in categories %}
+                <a href="{% url 'getbyCategory' category.id %}"
+                   class="cat-pill px-5 py-2 rounded-full border-2 border-[#6f4e37]/40 text-[#6f4e37] text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37]">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Decorative divider -->
+        <div class="flex items-center gap-4 mb-12">
+            <div class="flex-1 h-px bg-gradient-to-r from-transparent to-[#6f4e37]/20"></div>
+            <span class="text-[#6f4e37]/40 text-lg select-none">☕</span>
+            <div class="flex-1 h-px bg-gradient-to-l from-transparent to-[#6f4e37]/20"></div>
+        </div>
+
+        <!-- Product grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="group bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 overflow-hidden flex flex-col
+                        shadow-sm hover:shadow-2xl hover:-translate-y-2
+                        transition-all duration-300 ease-out
+                        opacity-0 animate-fade-up delay-{{ forloop.counter }}">
+
+                <!-- Image -->
+                <div class="relative overflow-hidden h-48 shrink-0">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                         loading="lazy">
+
+                    <!-- Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#2C1503]/40 to-transparent
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    <!-- Quick-view chip -->
+                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-3 opacity-0
+                                group-hover:opacity-100 group-hover:translate-y-0
+                                transition-all duration-300
+                                bg-white/90 backdrop-blur-sm text-[#2C1503]
+                                text-[0.65rem] font-bold tracking-widest uppercase
+                                px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
+                        Quick View →
+                    </div>
+
+                    <!-- Badge -->
+                    <div class="absolute top-3 left-3 -translate-y-1 opacity-0
+                                group-hover:opacity-100 group-hover:translate-y-0
+                                transition-all duration-300 delay-75
+                                bg-[#2C1503] text-[#C4A882]
+                                text-[0.6rem] font-bold tracking-widest uppercase
+                                px-2.5 py-1 rounded">
+                        Premium
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="p-4 flex-1 flex flex-col">
+                    <h3 class="font-display text-[#2C1503] text-base font-semibold leading-snug mb-1.5">
+                        {{ product.name }}
+                    </h3>
+                    <p class="text-[#8a7060] text-xs leading-relaxed font-light line-clamp-2 flex-1">
+                        {{ product.description }}
+                    </p>
+
+                    <!-- Stars -->
+                    <div class="flex items-center gap-0.5 mt-3">
+                        {% for i in "12345" %}
+                            {% if i|to_int <= product.average_rating|to_float %}
+                                <span class="text-amber-400 text-sm hover:scale-125 transition-transform duration-150 cursor-default">★</span>
+                            {% else %}
+                                <span class="text-[#DDD3C7] text-sm cursor-default">★</span>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="text-[#9E8A7A] text-[0.7rem] ml-1.5">
+                            {{ product.average_rating|to_float|default:"—" }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-4 pb-4 pt-3 border-t border-[#6f4e37]/10 flex items-center justify-between gap-2">
+                    <p class="font-display text-[#6f4e37] text-xl font-bold">
+                        <sup class="text-xs font-sans font-normal">₱</sup>{{ product.price|floatformat:2 }}
+                    </p>
+                    <button type="button"
+                            onclick="handleBuy(event, this)"
+                            class="relative overflow-hidden flex items-center gap-1.5
+                                   bg-[#2C1503] text-[#C4A882]
+                                   text-[0.7rem] font-bold tracking-widest uppercase
+                                   px-4 py-2 rounded-xl
+                                   transition-all duration-200
+                                   hover:bg-[#6f4e37] hover:text-white
+                                   active:scale-95">
+                        <span class="btn-label relative z-10">+ Add</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- See All / Show Less -->
+        <div class="mt-16 text-center">
+            {% if not show_all %}
+            <a href="?all=true"
+               class="group inline-flex items-center gap-2
+                      border-2 border-[#6f4e37]/35 text-[#6f4e37]
+                      text-xs font-bold tracking-widest uppercase
+                      px-9 py-3 rounded-full
+                      transition-all duration-300
+                      hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37] hover:gap-4">
+                View All Products
+                <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+            {% else %}
+            <a href="?"
+               class="inline-flex items-center gap-2
+                      border-2 border-[#6f4e37]/35 text-[#6f4e37]
+                      text-xs font-bold tracking-widest uppercase
+                      px-9 py-3 rounded-full
+                      transition-all duration-300
+                      hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37]">
+                Show Less
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+/* ── Active category pill ── */
+document.querySelectorAll('.cat-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill').forEach(p => {
+            p.classList.remove('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
+            p.classList.add('border-[#6f4e37]/40', 'text-[#6f4e37]');
         });
-    </script>
+        pill.classList.add('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
+        pill.classList.remove('border-[#6f4e37]/40', 'text-[#6f4e37]');
+    });
+});
+
+/* ── Buy button: ripple + confirmation ── */
+function handleBuy(e, btn) {
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-el';
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+    const productId = btn.getAttribute('data-product-id');
+    openBuyModal({
+        id: productId,
+        name: btn.querySelector('.product-name').textContent.trim(),
+        price: btn.querySelector('.product-price').textContent.trim(),
+        image: btn.querySelector('.product-image').src.trim()
+    });
+    const label = btn.querySelector('.btn-label');
+    label.textContent = '✓ Added';
+    btn.classList.add('!bg-green-700', '!text-white');
+    setTimeout(() => {
+        label.textContent = '+ Add';
+        btn.classList.remove('!bg-green-700', '!text-white');
+    }, 1400);
+}
+
+/* ── Scroll-triggered reveal for cards below the fold ── */
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.style.animationPlayState = 'running';
+            observer.unobserve(e.target);
+        }
+    });
+}, { threshold: 0.1 });
+
+
+document.querySelectorAll('.animate-fade-up').forEach((card, i) => {
+    if (i >= 4) {
+        card.style.animationPlayState = 'paused';
+        observer.observe(card);
+    }
+});
+</script>
 {% endblock %}
