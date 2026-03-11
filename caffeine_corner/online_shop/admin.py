@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Category, Order, Variant
+from .models import Product, Category, Order, Variant, Rating
 from unfold.admin import ModelAdmin
 
 
@@ -35,14 +35,12 @@ class VariantAdmin(ModelAdmin):
     list_max_show_all = 100
     list_max_show_all = 100
     list_per_page = 10
-    list_display = ('product', 'size', 'additional_price')
-    search_fields = ('product__name', 'size')
-    list_filter = ('product', 'size')
-    list_editable = ('additional_price',)
-    list_per_page = 10
-    list_max_show_all = 100
-    list_max_show_all = 100
-    list_per_page = 10
+
+@admin.register(Rating)
+class RatingAdmin(ModelAdmin):
+    list_display = ('product', 'user', 'rating', 'review', 'created_at')
+    list_filter = ('product', 'rating')
+
 
 @admin.register(Order)
 class OrderAdmin(ModelAdmin):

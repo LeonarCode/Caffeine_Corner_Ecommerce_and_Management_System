@@ -6,7 +6,6 @@
 {% block styles %}
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-    /* Only things Tailwind cannot express */
     body { font-family: 'Lato', sans-serif; }
     .font-display { font-family: 'Playfair Display', serif; }
 
@@ -27,7 +26,6 @@
         pointer-events: none;
     }
 
-    /* Stagger delays */
     .delay-1 { animation-delay: 0.05s; }
     .delay-2 { animation-delay: 0.10s; }
     .delay-3 { animation-delay: 0.15s; }
@@ -162,36 +160,73 @@
 
                     <!-- Stars -->
                     <div class="flex items-center gap-0.5 mt-3">
-                        {% for i in "12345" %}
-                            {% if i|to_int <= product.average_rating|to_float %}
-                                <span class="text-amber-400 text-sm hover:scale-125 transition-transform duration-150 cursor-default">★</span>
-                            {% else %}
-                                <span class="text-[#DDD3C7] text-sm cursor-default">★</span>
-                            {% endif %}
-                        {% endfor %}
-                        <span class="text-[#9E8A7A] text-[0.7rem] ml-1.5">
-                            {{ product.average_rating|to_float|default:"—" }}
-                        </span>
+                        
                     </div>
                 </div>
 
-                <!-- Footer -->
-                <div class="px-4 pb-4 pt-3 border-t border-[#6f4e37]/10 flex items-center justify-between gap-2">
+                <!-- Card Footer: price + two action buttons -->
+                <div class="px-4 pb-4 pt-3 border-t border-[#6f4e37]/10 flex flex-col gap-2">
+
+                    <!-- Price row -->
                     <p class="font-display text-[#6f4e37] text-xl font-bold">
                         <sup class="text-xs font-sans font-normal">₱</sup>{{ product.price|floatformat:2 }}
                     </p>
-                    <button type="button"
-                            onclick="handleBuy(event, this)"
-                            class="relative overflow-hidden flex items-center gap-1.5
-                                   bg-[#2C1503] text-[#C4A882]
-                                   text-[0.7rem] font-bold tracking-widest uppercase
-                                   px-4 py-2 rounded-xl
-                                   transition-all duration-200
-                                   hover:bg-[#6f4e37] hover:text-white
-                                   active:scale-95">
-                        <span class="btn-label relative z-10">+ Add</span>
-                    </button>
+
+                    <!-- Button row -->
+                    <div class="flex gap-2">
+
+                        <!-- Add to Cart -->
+                        <button type="button"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-price="{{ product.price }}"
+                                data-product-image="{{ product.image.url }}"
+                                data-product-description="{{ product.description }}"
+                                data-product-rating="{{ product.average_rating }}"
+                                onclick="handleAddToCart(event, this)"
+                                class="btn-cart relative overflow-hidden flex-1 flex items-center justify-center gap-1.5
+                                       border-2 border-[#6f4e37]/50 text-[#6f4e37]
+                                       text-[0.65rem] font-bold tracking-widest uppercase
+                                       py-2 rounded-xl
+                                       hover:border-[#6f4e37] hover:bg-[#6f4e37]/8
+                                       transition-all duration-200 active:scale-95">
+                            <!-- Cart icon -->
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
+                                 viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 01-8 0"/>
+                            </svg>
+                            <span class="cart-label relative z-10">Cart</span>
+                            <span class="ripple-el"></span>
+                        </button>
+
+                        <!-- Buy Now / Checkout -->
+                        <button type="button"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-price="{{ product.price }}"
+                                data-product-image="{{ product.image.url }}"
+                                data-product-description="{{ product.description }}"
+                                data-product-rating="{{ product.average_rating }}"
+                                onclick="handleBuyNow(event, this)"
+                                class="btn-buy relative overflow-hidden flex-1 flex items-center justify-center gap-1.5
+                                       bg-[#2C1503] text-[#C4A882]
+                                       text-[0.65rem] font-bold tracking-widest uppercase
+                                       py-2 rounded-xl
+                                       hover:bg-[#6f4e37] hover:text-white
+                                       transition-all duration-200 active:scale-95">
+                            <!-- Lightning icon -->
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
+                                 viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                            <span class="buy-label relative z-10">Buy Now</span>
+                        </button>
+
+                    </div>
                 </div>
+
             </div>
             {% endfor %}
         </div>
@@ -241,41 +276,65 @@ document.querySelectorAll('.cat-pill').forEach(pill => {
     });
 });
 
-/* ── Buy button: ripple + confirmation ── */
-function handleBuy(e, btn) {
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
+/* ── Ripple helper ── */
+function spawnRipple(e, btn) {
+    const rect   = btn.getBoundingClientRect();
+    const size   = Math.max(rect.width, rect.height);
     const ripple = document.createElement('span');
     ripple.className = 'ripple-el';
     ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
     btn.appendChild(ripple);
     ripple.addEventListener('animationend', () => ripple.remove());
-    const productId = btn.getAttribute('data-product-id');
-    openBuyModal({
-        id: productId,
-        name: btn.querySelector('.product-name').textContent.trim(),
-        price: btn.querySelector('.product-price').textContent.trim(),
-        image: btn.querySelector('.product-image').src.trim()
-    });
-    const label = btn.querySelector('.btn-label');
+}
+
+/* ── Read product data from button attributes ── */
+function getProductData(btn) {
+    return {
+        id:          btn.dataset.productId,
+        name:        btn.dataset.productName,
+        price:       btn.dataset.productPrice,
+        image:       btn.dataset.productImage,
+        description: btn.dataset.productDescription,
+        rating:      btn.dataset.productRating,
+    };
+}
+
+/* ── Add to Cart ── */
+function handleAddToCart(e, btn) {
+    spawnRipple(e, btn);
+    const product = getProductData(btn);
+
+    // TODO: wire your cart logic here
+    // e.g. fetch('/cart/add/', { method:'POST', body: JSON.stringify({ id: product.id, qty: 1 }) })
+
+    // Feedback
+    const label = btn.querySelector('.cart-label');
     label.textContent = '✓ Added';
-    btn.classList.add('!bg-green-700', '!text-white');
+    btn.classList.add('!border-green-600', '!text-green-600');
     setTimeout(() => {
-        label.textContent = '+ Add';
-        btn.classList.remove('!bg-green-700', '!text-white');
+        label.textContent = 'Cart';
+        btn.classList.remove('!border-green-600', '!text-green-600');
     }, 1400);
+}
+
+/* ── Buy Now → open modal ── */
+function handleBuyNow(e, btn) {
+    spawnRipple(e, btn);
+    const product = getProductData(btn);
+
+    // Opens the buy modal (buy_modal.html must be included on the page)
+    openBuyModal(product);
 }
 
 /* ── Scroll-triggered reveal for cards below the fold ── */
 const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-        if (e.isIntersecting) {
-            e.target.style.animationPlayState = 'running';
-            observer.unobserve(e.target);
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+            observer.unobserve(entry.target);
         }
     });
 }, { threshold: 0.1 });
-
 
 document.querySelectorAll('.animate-fade-up').forEach((card, i) => {
     if (i >= 4) {
