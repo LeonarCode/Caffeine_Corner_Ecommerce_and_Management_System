@@ -1,5 +1,390 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
-{% block title %}Cart{% endblock %}
+{% block title %}My Cart{% endblock %}
 
-{% block content %}{% endblock %}
+{% block styles %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+    body { font-family: 'Lato', sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fade-up 0.4s ease forwards; }
+
+    @keyframes ripple {
+        to { transform: scale(4); opacity: 0; }
+    }
+    .ripple-el {
+        position: absolute; border-radius: 9999px;
+        background: rgba(196,168,130,0.45);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col bg-[#FAF6F0] min-h-screen">
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="bg-[#3D1F00] relative overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(196,168,130,0.10)_0%,transparent_65%)] pointer-events-none"></div>
+        <div class="max-w-6xl mx-auto px-6 py-10 flex items-end justify-between gap-4">
+            <div>
+                <p class="text-[#C4A882]/50 text-xs font-light tracking-widest uppercase mb-1">
+                    <a href="{% url 'home' %}" class="hover:text-[#C4A882] transition-colors duration-200">Home</a>
+                    <span class="mx-2">›</span> My Cart
+                </p>
+                <h1 class="font-display text-white text-3xl md:text-4xl font-bold leading-tight">
+                    My <em class="text-[#C4A882] italic">Cart</em>
+                </h1>
+                <p class="text-[#C4A882]/50 text-xs font-light tracking-wide mt-1">
+                    {{ user.get_full_name|default:user.username }}'s order
+                </p>
+            </div>
+            <!-- Item count badge -->
+            <div class="shrink-0 bg-[#C4A882]/10 border border-[#C4A882]/20 px-4 py-2 rounded-2xl text-right">
+                <p class="text-[#C4A882]/60 text-[0.6rem] font-light tracking-widest uppercase">Items</p>
+                <p class="font-display text-[#C4A882] text-2xl font-bold leading-tight">{{ cart_items.count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto w-full px-6 py-12">
+
+        {% if cart_items %}
+
+        <div class="flex flex-col lg:flex-row gap-8 items-start">
+
+            <!-- ── CART ITEMS LIST ── -->
+            <div class="flex-1 flex flex-col gap-4">
+
+                {% for item in cart_items %}
+                <div id="cart-item-{{ item.id }}"
+                     class="group bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10
+                            shadow-sm hover:shadow-md
+                            transition-all duration-300
+                            flex gap-4 p-4
+                            opacity-0 animate-fade-up delay-{{ forloop.counter }}">
+
+                    <!-- Product image -->
+                    <div class="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-[#EDE0CC]">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 flex flex-col justify-between min-w-0">
+                        <div>
+                            <h3 class="font-display text-[#2C1503] text-base font-semibold leading-snug truncate">
+                                {{ item.product.name }}
+                            </h3>
+                            <p class="text-[#8a7060] text-xs font-light mt-0.5 line-clamp-1">
+                                {{ item.product.description }}
+                            </p>
+                        </div>
+
+                        <!-- Qty controls -->
+                        <div class="flex items-center gap-3 mt-3">
+                            <div class="flex items-center gap-1.5 bg-[#EDE0CC]/60 rounded-xl px-1 py-1">
+                                <button type="button"
+                                        onclick="changeQty({{ item.id }}, -1, this)"
+                                        class="w-7 h-7 flex items-center justify-center
+                                               bg-white text-[#2C1503] font-bold text-base rounded-lg
+                                               shadow-sm hover:bg-[#6f4e37] hover:text-white
+                                               transition-all duration-150 active:scale-90">−</button>
+                                <span id="qty-{{ item.id }}"
+                                      class="font-display text-[#2C1503] font-bold text-base w-6 text-center select-none">
+                                    {{ item.quantity }}
+                                </span>
+                                <button type="button"
+                                        onclick="changeQty({{ item.id }}, 1, this)"
+                                        class="w-7 h-7 flex items-center justify-center
+                                               bg-white text-[#2C1503] font-bold text-base rounded-lg
+                                               shadow-sm hover:bg-[#6f4e37] hover:text-white
+                                               transition-all duration-150 active:scale-90">+</button>
+                            </div>
+                            <span class="text-[#8a7060] text-xs font-light">
+                                ₱{{ item.product.price|floatformat:2 }} each
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Price + remove -->
+                    <div class="flex flex-col items-end justify-between shrink-0">
+                        <button type="button"
+                                onclick="removeItem({{ item.id }}, this)"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg
+                                       text-[#8a7060] hover:bg-red-50 hover:text-red-400
+                                       transition-all duration-200"
+                                aria-label="Remove">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                                 viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                            </svg>
+                        </button>
+                        <p id="subtotal-{{ item.id }}"
+                           class="font-display text-[#6f4e37] text-lg font-bold">
+                            ₱{{ item.subtotal|floatformat:2 }}
+                        </p>
+                    </div>
+
+                </div>
+                {% endfor %}
+
+                <!-- Continue shopping -->
+                <a href="{% url 'home' %}"
+                   class="group inline-flex items-center gap-2 mt-2
+                          text-[#6f4e37] text-xs font-bold tracking-widest uppercase
+                          hover:gap-3 transition-all duration-200">
+                    <svg class="w-4 h-4 rotate-180 transition-transform duration-200 group-hover:-translate-x-1"
+                         fill="none" stroke="currentColor" stroke-width="2.5"
+                         viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    Continue Shopping
+                </a>
+            </div>
+
+            <!-- ── ORDER SUMMARY ── -->
+            <div class="w-full lg:w-80 shrink-0 sticky top-6">
+                <div class="bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 shadow-sm overflow-hidden">
+
+                    <!-- Summary header -->
+                    <div class="bg-[#2C1503] px-6 py-5">
+                        <p class="font-display text-[#C4A882] text-lg font-bold">Order Summary</p>
+                        <p class="text-[#C4A882]/50 text-xs font-light mt-0.5">{{ cart_items.count }} item{{ cart_items.count|pluralize }}</p>
+                    </div>
+
+                    <div class="px-6 py-5 flex flex-col gap-4">
+
+                        <!-- Line items -->
+                        <div class="flex flex-col gap-2">
+                            {% for item in cart_items %}
+                            <div class="flex justify-between items-center" id="summary-row-{{ item.id }}">
+                                <span class="text-[#8a7060] text-xs font-light truncate max-w-[60%]">
+                                    {{ item.product.name }}
+                                    <span class="text-[#8a7060]/60">×<span id="summary-qty-{{ item.id }}">{{ item.quantity }}</span></span>
+                                </span>
+                                <span id="summary-sub-{{ item.id }}" class="text-[#2C1503] text-xs font-semibold">
+                                    ₱{{ item.subtotal|floatformat:2 }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="h-px bg-[#6f4e37]/10"></div>
+
+                        <!-- Subtotal -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-[#8a7060] text-sm font-light">Subtotal</span>
+                            <span id="grand-subtotal" class="font-display text-[#2C1503] text-sm font-bold">
+                                ₱{% with total=0 %}{% for item in cart_items %}{% with total=total|add:item.subtotal %}{% endwith %}{% endfor %}{{ total|floatformat:2 }}{% endwith %}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <span class="text-[#8a7060] text-sm font-light">Delivery</span>
+                            <span class="text-[#6f4e37] text-sm font-semibold">Free</span>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="h-px bg-[#6f4e37]/10"></div>
+
+                        <!-- Total -->
+                        <div class="flex justify-between items-center">
+                            <span class="font-display text-[#2C1503] text-base font-bold">Total</span>
+                            <span id="grand-total" class="font-display text-[#6f4e37] text-2xl font-bold">
+                                ₱<span id="grand-total-value">{{ total|floatformat:2 |to_float }}</span>
+                            </span>
+                        </div>
+
+                        <!-- Checkout button -->
+                        <button type="button"
+                                onclick="handleCheckout(this)"
+                                class="relative overflow-hidden w-full
+                                       bg-[#2C1503] text-[#C4A882]
+                                       font-bold text-xs tracking-widest uppercase
+                                       py-4 rounded-2xl mt-2
+                                       hover:bg-[#6f4e37] hover:text-white
+                                       transition-all duration-300 active:scale-[0.98]
+                                       flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                                 viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                            Proceed to Checkout
+                        </button>
+
+                        <p class="text-[#8a7060]/60 text-[0.65rem] text-center font-light">
+                            Secure checkout · Free delivery
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- ── EMPTY CART ── -->
+        <div class="flex flex-col items-center justify-center py-32 text-center opacity-0 animate-fade-up delay-1">
+            <div class="w-20 h-20 rounded-full bg-[#EDE0CC]/60 flex items-center justify-center mb-6">
+                <svg class="w-9 h-9 text-[#6f4e37]/40" fill="none" stroke="currentColor" stroke-width="1.5"
+                     viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 01-8 0"/>
+                </svg>
+            </div>
+            <p class="font-display text-[#2C1503] text-2xl font-bold mb-2">Your cart is empty</p>
+            <p class="text-[#8a7060] text-sm font-light mb-8">Looks like you haven't added anything yet.</p>
+            <a href="{% url 'home' %}"
+               class="group inline-flex items-center gap-2
+                      bg-[#2C1503] text-[#C4A882]
+                      text-xs font-bold tracking-widest uppercase
+                      px-8 py-3.5 rounded-2xl
+                      hover:bg-[#6f4e37] hover:text-white hover:gap-3
+                      transition-all duration-300">
+                Browse Products
+                <svg class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                     fill="none" stroke="currentColor" stroke-width="2.5"
+                     viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+        {% endif %}
+        
+
+    </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   STATE — mirrors server-rendered cart data
+   ══════════════════════════════════════════════ */
+const cartState = {
+    {% for item in cart_items %}
+    {{ item.id }}: {
+        qty:      {{ item.quantity }},
+        price:    {{ item.product.price }},
+        subtotal: {{ item.subtotal }},
+    },
+    {% endfor %}
+};
+
+/* ══════════════════════════════════════════════
+   QTY CHANGE
+   ══════════════════════════════════════════════ */
+function changeQty(itemId, delta, btn) {
+    const state = cartState[itemId];
+    const newQty = state.qty + delta;
+    if (newQty < 1) return;
+
+    state.qty      = newQty;
+    state.subtotal = parseFloat((state.price * newQty).toFixed(2));
+
+    // Update qty display
+    document.getElementById(`qty-${itemId}`).textContent       = newQty;
+    document.getElementById(`summary-qty-${itemId}`).textContent = newQty;
+
+    // Update subtotals
+    const fmtSub = '₱' + state.subtotal.toFixed(2);
+    document.getElementById(`subtotal-${itemId}`).textContent  = fmtSub;
+    document.getElementById(`summary-sub-${itemId}`).textContent = '₱' + state.subtotal.toFixed(2);
+
+    // Recalculate grand total
+    recalcTotal();
+
+    // TODO: persist to backend
+    // fetch(`/cart/update/${itemId}/`, {
+    //     method: 'POST',
+    //     headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ quantity: newQty })
+    // });
+}
+
+/* ══════════════════════════════════════════════
+   REMOVE ITEM
+   ══════════════════════════════════════════════ */
+function removeItem(itemId, btn) {
+    const row = document.getElementById(`cart-item-${itemId}`);
+    const summaryRow = document.getElementById(`summary-row-${itemId}`);
+
+    // Animate out
+    row.style.transition = 'all 0.3s ease';
+    row.style.opacity    = '0';
+    row.style.transform  = 'translateX(20px)';
+
+    setTimeout(() => {
+        row.remove();
+        if (summaryRow) summaryRow.remove();
+        delete cartState[itemId];
+        recalcTotal();
+        checkIfEmpty();
+    }, 300);
+
+    // TODO: persist to backend
+    // fetch(`/cart/remove/${itemId}/`, {
+    //     method: 'POST',
+    //     headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    // });
+}
+
+/* ══════════════════════════════════════════════
+   RECALC TOTAL
+   ══════════════════════════════════════════════ */
+function recalcTotal() {
+    const total = Object.values(cartState).reduce((sum, item) => sum + item.subtotal, 0);
+    document.getElementById('grand-total-value').textContent = total.toFixed(2);
+    if (document.getElementById('grand-subtotal')) {
+        document.getElementById('grand-subtotal').textContent = '₱' + total.toFixed(2);
+    }
+}
+
+/* ══════════════════════════════════════════════
+   EMPTY STATE CHECK
+   ══════════════════════════════════════════════ */
+function checkIfEmpty() {
+    if (Object.keys(cartState).length === 0) {
+        // Reload to show empty state template block cleanly
+        window.location.reload();
+    }
+}
+
+/* ══════════════════════════════════════════════
+   CHECKOUT
+   ══════════════════════════════════════════════ */
+function handleCheckout(btn) {
+    // TODO: wire to your checkout view
+    // window.location.href = '/checkout/';
+    btn.innerHTML = `
+        <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+        Processing...`;
+}
+
+/* ══════════════════════════════════════════════
+   CSRF HELPER
+   ══════════════════════════════════════════════ */
+function getCookie(name) {
+    return document.cookie.split(';')
+        .map(c => c.trim())
+        .find(c => c.startsWith(name + '='))
+        ?.split('=')[1];
+}
+</script>
+{% endblock %}

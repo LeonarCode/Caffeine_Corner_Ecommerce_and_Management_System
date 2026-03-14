@@ -14,7 +14,7 @@
                 </a>
                 <h2 class="text-xl sm:text-2xl text-white ml-20 sm:ml-95">Sign In</h2>
             </div>
-            <form action="" method="POST" class="w-80 sm:w-150 gap-y-5 flex flex-col">
+            <form action="{% url 'email_signin' %}" method="POST" class="w-80 sm:w-150 gap-y-5 flex flex-col">
                 {% csrf_token %}
                 <div class="relative">
                     <input type="text" name="username" placeholder=" " class="peer w-full rounded-full border border-white/70 bg-transparent px-5 pt-6 pb-2 text-white placeholder-transparent transition-all duration-300 ease-out focus:outline-none focus:border-white focus:ring-1 focus:ring-white focus:scale-[1.02]"/>

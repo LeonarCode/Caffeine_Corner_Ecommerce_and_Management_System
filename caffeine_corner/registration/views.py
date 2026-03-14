@@ -16,7 +16,7 @@ def email_signup(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Your account has been created successfully. You can now log in.')
-            return redirect('/authentication/signin/')
+            return redirect('/registration/signin/')
         else:
             messages.error(request, 'Something went wrong. Please try again.')
     else:
@@ -27,6 +27,6 @@ def email_signup(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('/shop/home/',)
+    return redirect('home')
 
 

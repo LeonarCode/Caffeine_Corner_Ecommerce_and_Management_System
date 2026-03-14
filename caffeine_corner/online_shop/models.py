@@ -202,6 +202,10 @@ class CartItem(models.Model):
                 from django.core.exceptions import ValidationError
                 raise ValidationError("A cart item for this product without a variant already exists for this user.")
 
+    @property
+    def subtotal(self):
+        return self.product.price * self.quantity
+
 
 class LoyaltyPoint(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="loyalty")

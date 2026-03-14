@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.templatetags.static import static
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,6 +39,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'unfold',
     'unfold.contrib.import_export',
+    'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -80,8 +84,6 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # Allauth General Settings
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
@@ -197,15 +199,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
+
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOW_ALL_ORIGINS = True
 
-LOGIN_REDIRECT_URL = '/shop/home/'
-LOGOUT_REDIRECT_URL = '/shop/home/'
+LOGIN_REDIRECT_URL = '/home/'
+LOGOUT_REDIRECT_URL = '/home/'
 
 # Mag-expire ang session pag nagsara ng browser
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -215,25 +222,158 @@ SESSION_COOKIE_AGE = 3600
 
 UNFOLD = {
     "DASHBOARD_CALLBACK": "inventory.views.dashboard_callback",
-    "SITE_TITLE": "CAFFEINE CORNER Admin",
+ 
+    "SITE_TITLE": "Caffeine Corner",
+    "SITE_HEADER": "Caffeine Corner",
+    "SITE_SUBHEADER": "Store Management",
+    "SITE_URL": "/",
+    "SITE_SYMBOL": "coffee",
+ 
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+ 
     "COLORS": {
         "primary": {
-            "50": "250 245 235",   # lightest
+            "50":  "250 245 235",
             "100": "245 235 215",
             "200": "235 215 180",
             "300": "210 175 130",
-            "400": "185 140 90",
-            "500": "160 105 55",   # main brand color (coffee brown)
-            "600": "130 80 35",
-            "700": "100 60 20",
-            "800": "75 45 15",
-            "900": "50 30 10",
-            "950": "30 15 5",      # darkest
+            "400": "185 140  90",
+            "500": "160 105  55",
+            "600": "130  80  35",
+            "700": "100  60  20",
+            "800": " 75  45  15",
+            "900": " 50  30  10",
+            "950": " 30  15   5",
         },
     },
+ 
     "LOGIN": {
-        "image": "img/Background.jpg",  # background image sa login page
+        "image": "img/Background.jpg",
         "redirect_after": "/admin/",
+    },
+ 
+    "STYLES": [
+        lambda request: static("css/caffeine_unfold.css"),
+    ],
+ 
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+        "navigation": [
+            # ── Store ──────────────────────────────────────────────────────────
+            {
+                "title": _("Store"),
+                "separator": False,
+                "collapsible": False,
+                "items": [
+                    {
+                        "title": _("Dashboard"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                    {
+                        "title": _("Orders"),
+                        "icon": "receipt_long",
+                        "link": reverse_lazy("admin:online_shop_order_changelist"),
+                    },
+                    {
+                        "title": _("Cart Items"),
+                        "icon": "shopping_cart",
+                        "link": reverse_lazy("admin:online_shop_cartitem_changelist"),
+                    },
+                    {
+                        "title": _("Products"),
+                        "icon": "coffee",
+                        "link": reverse_lazy("admin:online_shop_product_changelist"),
+                    },
+                    {
+                        "title": _("Variants"),
+                        "icon": "tune",
+                        "link": reverse_lazy("admin:online_shop_variant_changelist"),
+                    },
+                    {
+                        "title": _("Categories"),
+                        "icon": "category",
+                        "link": reverse_lazy("admin:online_shop_category_changelist"),
+                    },
+                    {
+                        "title": _("Ratings"),
+                        "icon": "star",
+                        "link": reverse_lazy("admin:online_shop_rating_changelist"),
+                    },
+                    {
+                        "title": _("Loyalty Points"),
+                        "icon": "loyalty",
+                        "link": reverse_lazy("admin:online_shop_loyaltypoint_changelist"),
+                    },
+                ],
+            },
+            # ── Inventory ──────────────────────────────────────────────────────
+            {
+                "title": _("Inventory"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Inventory"),
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:inventory_inventory_changelist"),
+                    },
+                ],
+            },
+            # ── Users & Access ─────────────────────────────────────────────────
+            {
+                "title": _("Users & Access"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Users"),
+                        "icon": "person",
+                        "link": reverse_lazy("admin:auth_user_changelist"),
+                    },
+                    {
+                        "title": _("Groups"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                    {
+                        "title": _("Email addresses"),
+                        "icon": "mail",
+                        "link": reverse_lazy("admin:account_emailaddress_changelist"),
+                    },
+                ],
+            },
+            # ── Social & Sites ─────────────────────────────────────────────────
+            {
+                "title": _("Social & Sites"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Social accounts"),
+                        "icon": "share",
+                        "link": reverse_lazy("admin:socialaccount_socialaccount_changelist"),
+                    },
+                    {
+                        "title": _("Social applications"),
+                        "icon": "extension",
+                        "link": reverse_lazy("admin:socialaccount_socialapp_changelist"),
+                    },
+                    {
+                        "title": _("Social tokens"),
+                        "icon": "key",
+                        "link": reverse_lazy("admin:socialaccount_socialtoken_changelist"),
+                    },
+                    {
+                        "title": _("Sites"),
+                        "icon": "language",
+                        "link": reverse_lazy("admin:sites_site_changelist"),
+                    },
+                ],
+            },
+        ],
     },
 }
 

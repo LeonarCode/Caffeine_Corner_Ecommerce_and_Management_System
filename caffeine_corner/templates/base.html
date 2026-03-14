@@ -60,19 +60,30 @@
                 </div>
             </div>
             {% if search_bar|default:False %}
-            <div class="search-desktop">
-                <button type="button" class="mr-2">
+                <div class="search-desktop relative">
+                    <button type="button" class="mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </button>
+                    <input id="search-input-desktop"
+                        type="text"
+                        class="w-70 h-10 focus:placeholder-transparent"
+                        placeholder="Search for products"
+                        autocomplete="off"
+                        oninput="handleSearch(this.value, 'search-results-desktop')"/>
+                    <!-- Dropdown -->
+                    <div id="search-results-desktop"
+                        class="absolute top-12 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-[#6f4e37]/10 overflow-hidden hidden z-50">
+                    </div>
+                </div>
+
+                <!-- Mobile search button -->
+                <button class="search-mobile-btn" onclick="showSearchMobile()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                     </svg>
                 </button>
-                <input type="text" class="w-70 h-10 focus:placeholder-transparent" placeholder="Search for products"/>
-            </div>
-            <button class="search-mobile-btn" onclick="showSearchMobile()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                </svg>
-            </button>
             {% endif %}
             {% if signUp|default:False %}
                 {% if user.is_authenticated %}
@@ -82,13 +93,21 @@
                 {% endif %}
             {% endif %}
         </div>
-        <div class="search-mobile">
+        <div class="search-mobile relative">
             <button type="button" class="mr-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
             </button>
-            <input type="text" class="w-full h-10 focus:placeholder-transparent" placeholder="Search for products"/>
+            <input id="search-input-mobile"
+                   type="text"
+                   class="w-full h-10 focus:placeholder-transparent"
+                   placeholder="Search for products"
+                   autocomplete="off"
+                   oninput="handleSearch(this.value, 'search-results-mobile')"/>
+            <div id="search-results-mobile"
+                 class="absolute top-12 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-[#6f4e37]/10 overflow-hidden hidden z-50">
+            </div>
         </div>
     </header>
     <div>
@@ -99,10 +118,82 @@
         {% include 'home/footer.html' %}
     {% endif %}
     <script>
+        function getCookie(name) {
+            return document.cookie.split(';')
+                .map(c => c.trim())
+                .find(c => c.startsWith(name + '='))
+                ?.split('=')[1];
+        }
         function showSearchMobile() {
             const searchMobile = document.querySelector('.search-mobile');
             searchMobile.classList.toggle('show-search-mobile');
         }
+        let _searchTimer = null;
+
+        function handleSearch(query, dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            clearTimeout(_searchTimer);
+
+            if (query.trim().length < 2) {
+                dropdown.classList.add('hidden');
+                dropdown.innerHTML = '';
+                return;
+            }
+
+            // Debounce — wait 300ms after user stops typing
+            _searchTimer = setTimeout(() => {
+                fetch(`/search/?q=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => renderSearchResults(data.products, dropdown, query))
+                .catch(() => dropdown.classList.add('hidden'));
+            }, 300);
+        }
+
+        function renderSearchResults(products, dropdown, query) {
+            if (!products || products.length === 0) {
+                dropdown.innerHTML = `
+                    <div class="px-4 py-6 text-center">
+                        <p class="text-[#8a7060] text-sm font-light">No products found for "<strong>${query}</strong>"</p>
+                    </div>`;
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = products.map(p => `
+                <a href="/product/${p.id}/"
+                class="flex items-center gap-3 px-4 py-3 hover:bg-[#FAF6F0] transition-colors duration-150 border-b border-[#6f4e37]/5 last:border-0">
+                    <img src="${p.image}" alt="${p.name}"
+                        class="w-10 h-10 rounded-lg object-cover shrink-0 bg-[#EDE0CC]">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[#2C1503] text-sm font-semibold truncate">${p.name}</p>
+                        <p class="text-[#8a7060] text-xs font-light truncate">${p.category ?? ''}</p>
+                    </div>
+                    <p class="text-[#6f4e37] text-sm font-bold shrink-0">₱${parseFloat(p.price).toFixed(2)}</p>
+                </a>
+            `).join('') + `
+                <div class="px-4 py-2.5 bg-[#FAF6F0] text-center">
+                    <a href="/search/?q=${encodeURIComponent(products[0]?.query ?? '')}"
+                    class="text-[#6f4e37] text-xs font-bold tracking-widest uppercase hover:underline">
+                        See all results
+                    </a>
+                </div>`;
+
+            dropdown.classList.remove('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', e => {
+            ['search-results-desktop', 'search-results-mobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.contains(e.target) &&
+                    e.target.id !== 'search-input-desktop' &&
+                    e.target.id !== 'search-input-mobile') {
+                    el.classList.add('hidden');
+                }
+            });
+        });
     </script>
 </body>
 </html>

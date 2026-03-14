@@ -13,7 +13,7 @@
         from { opacity: 0; transform: translateY(20px); }
         to   { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-up { animation: fade-up 0.5s ease forwards; }
+    .animate-fade-up { animation: fade-up 0.4s ease forwards; }
 
     @keyframes ripple {
         to { transform: scale(4); opacity: 0; }
@@ -26,14 +26,33 @@
         pointer-events: none;
     }
 
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.10s; }
-    .delay-3 { animation-delay: 0.15s; }
-    .delay-4 { animation-delay: 0.20s; }
-    .delay-5 { animation-delay: 0.25s; }
-    .delay-6 { animation-delay: 0.30s; }
-    .delay-7 { animation-delay: 0.35s; }
-    .delay-8 { animation-delay: 0.40s; }
+    @keyframes badge-pop {
+        0%   { transform: scale(0.5); opacity: 0; }
+        70%  { transform: scale(1.3); }
+        100% { transform: scale(1);   opacity: 1; }
+    }
+    .badge-pop { animation: badge-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+    @keyframes shimmer {
+        0%   { background-position: -400px 0; }
+        100% { background-position:  400px 0; }
+    }
+    .skeleton {
+        background: linear-gradient(90deg, #EDE0CC 25%, #F5EFE6 50%, #EDE0CC 75%);
+        background-size: 400px 100%;
+        animation: shimmer 1.2s infinite;
+        border-radius: 16px;
+        height: 320px;
+    }
+
+    .delay-1 { animation-delay: 0.04s; }
+    .delay-2 { animation-delay: 0.08s; }
+    .delay-3 { animation-delay: 0.12s; }
+    .delay-4 { animation-delay: 0.16s; }
+    .delay-5 { animation-delay: 0.20s; }
+    .delay-6 { animation-delay: 0.24s; }
+    .delay-7 { animation-delay: 0.28s; }
+    .delay-8 { animation-delay: 0.32s; }
 </style>
 {% endblock %}
 
@@ -78,6 +97,65 @@
     <!-- ── MAIN CONTENT ──────────────────────────────── -->
     <div class="max-w-6xl mx-auto w-full px-6 py-14">
 
+        <!-- Cart button -->
+        <div class="flex justify-end mb-8">
+            {% if user.is_authenticated %}
+            <a href="{% url 'cart' user.id %}"
+            class="group relative flex items-center gap-2.5
+                    bg-[#FDF9F4] border border-[#6f4e37]/20
+                    hover:bg-[#2C1503] hover:border-[#2C1503]
+                    pl-3 pr-4 py-2.5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
+                <div class="relative">
+                    <div class="w-8 h-8 rounded-xl bg-[#6f4e37]/10 group-hover:bg-[#C4A882]/15 flex items-center justify-center transition-colors duration-300">
+                        <svg class="w-4 h-4 text-[#6f4e37] group-hover:text-[#C4A882] transition-colors duration-300"
+                            fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <path d="M16 10a4 4 0 01-8 0"/>
+                        </svg>
+                    </div>
+                    <span id="cart-count"
+                        class="absolute -top-1.5 -right-1.5 hidden min-w-[18px] h-[18px] px-1 rounded-full
+                                bg-[#6f4e37] group-hover:bg-[#C4A882] text-white group-hover:text-[#2C1503]
+                                text-[0.6rem] font-bold flex items-center justify-center transition-colors duration-300 leading-none">
+                        0
+                    </span>
+                </div>
+                <div class="flex flex-col leading-none">
+                    <span class="text-[#8a7060] group-hover:text-[#C4A882]/60 text-[0.55rem] font-light tracking-widest uppercase transition-colors duration-300">My</span>
+                    <span class="font-display text-[#2C1503] group-hover:text-[#C4A882] text-sm font-semibold tracking-wide transition-colors duration-300">Cart</span>
+                </div>
+                <svg class="w-3.5 h-3.5 text-[#6f4e37]/30 group-hover:text-[#C4A882]/50 group-hover:translate-x-0.5 transition-all duration-300"
+                    fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </a>
+            {% else %}
+            <a href="{% url 'signin' %}"
+            class="group relative flex items-center gap-2.5
+                    bg-[#FDF9F4] border border-[#6f4e37]/20
+                    hover:bg-[#2C1503] hover:border-[#2C1503]
+                    pl-3 pr-4 py-2.5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
+                <div class="w-8 h-8 rounded-xl bg-[#6f4e37]/10 group-hover:bg-[#C4A882]/15 flex items-center justify-center transition-colors duration-300">
+                    <svg class="w-4 h-4 text-[#6f4e37] group-hover:text-[#C4A882] transition-colors duration-300"
+                        fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                </div>
+                <div class="flex flex-col leading-none">
+                    <span class="text-[#8a7060] group-hover:text-[#C4A882]/60 text-[0.55rem] font-light tracking-widest uppercase transition-colors duration-300">Sign in to</span>
+                    <span class="font-display text-[#2C1503] group-hover:text-[#C4A882] text-sm font-semibold tracking-wide transition-colors duration-300">Cart</span>
+                </div>
+                <svg class="w-3.5 h-3.5 text-[#6f4e37]/30 group-hover:text-[#C4A882]/50 group-hover:translate-x-0.5 transition-all duration-300"
+                    fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </a>
+            {% endif %}
+        </div>
+
         <!-- Section header -->
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
             <div>
@@ -89,16 +167,23 @@
             </div>
 
             <!-- Category pills -->
-            <div class="flex gap-2 flex-wrap shrink-0">
-                <a href="{% url 'home' %}"
-                   class="cat-pill px-5 py-2 rounded-full border-2 border-[#6f4e37] bg-[#6f4e37] text-white text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:opacity-90">
+            <div class="flex gap-2 flex-wrap shrink-0" id="category-pills">
+                <!-- "All" pill — active by default on first load -->
+                <button type="button"
+                        data-category="all"
+                        onclick="filterProducts(this)"
+                        class="cat-pill px-5 py-2 rounded-full border-2 text-xs font-bold tracking-widest uppercase transition-all duration-200
+                               border-[#6f4e37] bg-[#6f4e37] text-white">
                     All
-                </a>
+                </button>
                 {% for category in categories %}
-                <a href="{% url 'getbyCategory' category.id %}"
-                   class="cat-pill px-5 py-2 rounded-full border-2 border-[#6f4e37]/40 text-[#6f4e37] text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37]">
+                <button type="button"
+                        data-category="{{ category.id }}"
+                        onclick="filterProducts(this)"
+                        class="cat-pill px-5 py-2 rounded-full border-2 text-xs font-bold tracking-widest uppercase transition-all duration-200
+                               border-[#6f4e37]/40 text-[#6f4e37] hover:bg-[#6f4e37]/10">
                     {{ category.name }}
-                </a>
+                </button>
                 {% endfor %}
             </div>
         </div>
@@ -110,72 +195,35 @@
             <div class="flex-1 h-px bg-gradient-to-l from-transparent to-[#6f4e37]/20"></div>
         </div>
 
-        <!-- Product grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- ── PRODUCT GRID — server renders on first load, JS replaces on filter ── -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {% for product in products %}
             <div class="group bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 overflow-hidden flex flex-col
-                        shadow-sm hover:shadow-2xl hover:-translate-y-2
-                        transition-all duration-300 ease-out
+                        shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-out
                         opacity-0 animate-fade-up delay-{{ forloop.counter }}">
-
-                <!-- Image -->
                 <div class="relative overflow-hidden h-48 shrink-0">
                     <img src="{{ product.image.url }}" alt="{{ product.name }}"
-                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                         loading="lazy">
-
-                    <!-- Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#2C1503]/40 to-transparent
-                                opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                    <!-- Quick-view chip -->
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#2C1503]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div class="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-3 opacity-0
-                                group-hover:opacity-100 group-hover:translate-y-0
-                                transition-all duration-300
-                                bg-white/90 backdrop-blur-sm text-[#2C1503]
-                                text-[0.65rem] font-bold tracking-widest uppercase
-                                px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
-                        Quick View →
-                    </div>
-
-                    <!-- Badge -->
+                                group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300
+                                bg-white/90 backdrop-blur-sm text-[#2C1503] text-[0.65rem] font-bold tracking-widest uppercase
+                                px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">Quick View →</div>
                     <div class="absolute top-3 left-3 -translate-y-1 opacity-0
-                                group-hover:opacity-100 group-hover:translate-y-0
-                                transition-all duration-300 delay-75
-                                bg-[#2C1503] text-[#C4A882]
-                                text-[0.6rem] font-bold tracking-widest uppercase
-                                px-2.5 py-1 rounded">
-                        Premium
-                    </div>
+                                group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 delay-75
+                                bg-[#2C1503] text-[#C4A882] text-[0.6rem] font-bold tracking-widest uppercase px-2.5 py-1 rounded">Premium</div>
                 </div>
-
-                <!-- Body -->
                 <div class="p-4 flex-1 flex flex-col">
-                    <h3 class="font-display text-[#2C1503] text-base font-semibold leading-snug mb-1.5">
-                        {{ product.name }}
-                    </h3>
-                    <p class="text-[#8a7060] text-xs leading-relaxed font-light line-clamp-2 flex-1">
-                        {{ product.description }}
-                    </p>
-
-                    <!-- Stars -->
+                    <h3 class="font-display text-[#2C1503] text-base font-semibold leading-snug mb-1.5">{{ product.name }}</h3>
+                    <p class="text-[#8a7060] text-xs leading-relaxed font-light line-clamp-2 flex-1">{{ product.description }}</p>
                     <div class="flex items-center gap-0.5 mt-3">
-                        
                     </div>
                 </div>
-
-                <!-- Card Footer: price + two action buttons -->
                 <div class="px-4 pb-4 pt-3 border-t border-[#6f4e37]/10 flex flex-col gap-2">
-
-                    <!-- Price row -->
                     <p class="font-display text-[#6f4e37] text-xl font-bold">
                         <sup class="text-xs font-sans font-normal">₱</sup>{{ product.price|floatformat:2 }}
                     </p>
-
-                    <!-- Button row -->
                     <div class="flex gap-2">
-
-                        <!-- Add to Cart -->
                         <button type="button"
                                 data-product-id="{{ product.id }}"
                                 data-product-name="{{ product.name }}"
@@ -185,23 +233,15 @@
                                 data-product-rating="{{ product.average_rating }}"
                                 onclick="handleAddToCart(event, this)"
                                 class="btn-cart relative overflow-hidden flex-1 flex items-center justify-center gap-1.5
-                                       border-2 border-[#6f4e37]/50 text-[#6f4e37]
-                                       text-[0.65rem] font-bold tracking-widest uppercase
-                                       py-2 rounded-xl
-                                       hover:border-[#6f4e37] hover:bg-[#6f4e37]/8
-                                       transition-all duration-200 active:scale-95">
-                            <!-- Cart icon -->
-                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
-                                 viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                       border-2 border-[#6f4e37]/50 text-[#6f4e37] text-[0.65rem] font-bold tracking-widest uppercase
+                                       py-2 rounded-xl hover:border-[#6f4e37] hover:bg-[#6f4e37]/8 transition-all duration-200 active:scale-95">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                                 <line x1="3" y1="6" x2="21" y2="6"/>
                                 <path d="M16 10a4 4 0 01-8 0"/>
                             </svg>
                             <span class="cart-label relative z-10">Cart</span>
-                            <span class="ripple-el"></span>
                         </button>
-
-                        <!-- Buy Now / Checkout -->
                         <button type="button"
                                 data-product-id="{{ product.id }}"
                                 data-product-name="{{ product.name }}"
@@ -211,136 +251,313 @@
                                 data-product-rating="{{ product.average_rating }}"
                                 onclick="handleBuyNow(event, this)"
                                 class="btn-buy relative overflow-hidden flex-1 flex items-center justify-center gap-1.5
-                                       bg-[#2C1503] text-[#C4A882]
-                                       text-[0.65rem] font-bold tracking-widest uppercase
-                                       py-2 rounded-xl
-                                       hover:bg-[#6f4e37] hover:text-white
-                                       transition-all duration-200 active:scale-95">
-                            <!-- Lightning icon -->
-                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
-                                 viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                       bg-[#2C1503] text-[#C4A882] text-[0.65rem] font-bold tracking-widest uppercase
+                                       py-2 rounded-xl hover:bg-[#6f4e37] hover:text-white transition-all duration-200 active:scale-95">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                             </svg>
                             <span class="buy-label relative z-10">Buy Now</span>
                         </button>
-
                     </div>
                 </div>
-
             </div>
             {% endfor %}
         </div>
 
-        <!-- See All / Show Less -->
+        <!-- Empty state (hidden by default) -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-24 text-center">
+            <p class="text-5xl mb-4">☕</p>
+            <p class="font-display text-[#2C1503] text-xl font-semibold mb-2">No products found</p>
+            <p class="text-[#8a7060] text-sm font-light">Try a different category</p>
+        </div>
+
+        <!-- ── SHOW ALL / SHOW LESS — only text + count changes, no reload ── -->
         <div class="mt-16 text-center">
-            {% if not show_all %}
-            <a href="?all=true"
-               class="group inline-flex items-center gap-2
-                      border-2 border-[#6f4e37]/35 text-[#6f4e37]
-                      text-xs font-bold tracking-widest uppercase
-                      px-9 py-3 rounded-full
-                      transition-all duration-300
-                      hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37] hover:gap-4">
-                View All Products
-                <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                     stroke-linecap="round" stroke-linejoin="round">
+            <button id="toggle-btn" type="button" onclick="toggleShowAll()"
+                    class="group inline-flex items-center gap-2
+                           border-2 border-[#6f4e37]/35 text-[#6f4e37]
+                           text-xs font-bold tracking-widest uppercase
+                           px-9 py-3 rounded-full transition-all duration-300
+                           hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37] hover:gap-4">
+                <span id="toggle-label">{% if show_all %}Show Less{% else %}View All Products{% endif %}</span>
+                <span id="toggle-count" class="opacity-60 font-normal normal-case tracking-normal"></span>
+                <svg id="toggle-icon"
+                     class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 {% if show_all %}rotate-180{% endif %}"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
-            </a>
-            {% else %}
-            <a href="?"
-               class="inline-flex items-center gap-2
-                      border-2 border-[#6f4e37]/35 text-[#6f4e37]
-                      text-xs font-bold tracking-widest uppercase
-                      px-9 py-3 rounded-full
-                      transition-all duration-300
-                      hover:bg-[#6f4e37] hover:text-white hover:border-[#6f4e37]">
-                Show Less
-            </a>
-            {% endif %}
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-/* ── Active category pill ── */
-document.querySelectorAll('.cat-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-        document.querySelectorAll('.cat-pill').forEach(p => {
-            p.classList.remove('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
-            p.classList.add('border-[#6f4e37]/40', 'text-[#6f4e37]');
-        });
-        pill.classList.add('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
-        pill.classList.remove('border-[#6f4e37]/40', 'text-[#6f4e37]');
-    });
-});
+/* ══════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════ */
+const PAGE_SIZE   = 8;                          // products shown before "View All"
+let _allProducts  = [];                         // full list for current category
+let _showAll      = {{ show_all|yesno:"true,false" }};
+let _activeCat    = 'all';
+let _cartCount    = 0;
 
-/* ── Ripple helper ── */
-function spawnRipple(e, btn) {
-    const rect   = btn.getBoundingClientRect();
-    const size   = Math.max(rect.width, rect.height);
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple-el';
-    ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
-    btn.appendChild(ripple);
-    ripple.addEventListener('animationend', () => ripple.remove());
+/* ══════════════════════════════════════════════════════
+   CATEGORY FILTER
+   ══════════════════════════════════════════════════════ */
+function filterProducts(pill) {
+    // 1. Swap active pill style instantly
+    document.querySelectorAll('.cat-pill').forEach(p => {
+        p.classList.remove('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
+        p.classList.add('border-[#6f4e37]/40', 'text-[#6f4e37]');
+    });
+    pill.classList.remove('border-[#6f4e37]/40', 'text-[#6f4e37]');
+    pill.classList.add('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
+
+    _activeCat = pill.dataset.category;
+    _showAll   = false;   // reset to collapsed when switching category
+
+    // 2. Skeleton while fetching
+    showSkeletons();
+
+    // 3. Fetch JSON from Django
+    const url = _activeCat === 'all'
+        ? '/all-products/'               // → returns all products as JSON
+        : `/category/${_activeCat}/`;  // → filtered
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(data => {
+            _allProducts = data.products;
+            renderVisible();
+        })
+        .catch(() => {
+            // Graceful fallback — navigate to category page if API not wired
+            window.location.href = _activeCat === 'all'
+                ? '/'
+                : `/category/${_activeCat}/`;
+        });
 }
 
-/* ── Read product data from button attributes ── */
+/* ══════════════════════════════════════════════════════
+   SHOW ALL / SHOW LESS  — only rerenders, no fetch
+   ══════════════════════════════════════════════════════ */
+function toggleShowAll() {
+    _showAll = !_showAll;
+    renderVisible();
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER — slices _allProducts based on _showAll flag
+   ══════════════════════════════════════════════════════ */
+function renderVisible() {
+    const visible = _showAll ? _allProducts : _allProducts.slice(0, PAGE_SIZE);
+    const total   = _allProducts.length;
+
+    // Update toggle button text
+    const label = document.getElementById('toggle-label');
+    const count = document.getElementById('toggle-count');
+    const icon  = document.getElementById('toggle-icon');
+    const btn   = document.getElementById('toggle-btn');
+
+    if (total <= PAGE_SIZE) {
+        btn.classList.add('hidden');           // no button needed if fits in one page
+    } else {
+        btn.classList.remove('hidden');
+        if (_showAll) {
+            label.textContent = 'Show Less';
+            count.textContent = '';
+            icon.classList.add('rotate-180');
+        } else {
+            label.textContent = 'View All Products';
+            count.textContent = `(${total - PAGE_SIZE} more)`;
+            icon.classList.remove('rotate-180');
+        }
+    }
+
+    // Render cards
+    const empty = document.getElementById('empty-state');
+    const grid  = document.getElementById('product-grid');
+
+    if (visible.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        empty.classList.add('flex');
+        return;
+    }
+    empty.classList.add('hidden');
+    empty.classList.remove('flex');
+    grid.innerHTML = visible.map((p, i) => makeCardHTML(p, i)).join('');
+    attachScrollReveal();
+}
+
+/* ══════════════════════════════════════════════════════
+   SKELETON PLACEHOLDERS
+   ══════════════════════════════════════════════════════ */
+function showSkeletons(count = 4) {
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('product-grid').innerHTML =
+        Array.from({ length: count }, (_, i) =>
+            `<div class="skeleton opacity-0 animate-fade-up delay-${i + 1}"></div>`
+        ).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   CARD HTML BUILDER
+   ══════════════════════════════════════════════════════ */
+function makeCardHTML(p, index) {
+    const delay = Math.min(index + 1, 8);
+    const stars = [1,2,3,4,5].map(i =>
+        `<span class="${i <= parseFloat(p.average_rating || 0) ? 'text-amber-400' : 'text-[#DDD3C7]'} text-sm">★</span>`
+    ).join('');
+    const esc = v => String(v ?? '').replace(/"/g, '&quot;');
+
+    return `
+    <div class="group bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 overflow-hidden flex flex-col
+                shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-out
+                opacity-0 animate-fade-up delay-${delay}">
+        <div class="relative overflow-hidden h-48 shrink-0">
+            <img src="${p.image}" alt="${esc(p.name)}"
+                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#2C1503]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-3 opacity-0
+                        group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300
+                        bg-white/90 backdrop-blur-sm text-[#2C1503] text-[0.65rem] font-bold tracking-widest uppercase
+                        px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">Quick View →</div>
+            <div class="absolute top-3 left-3 -translate-y-1 opacity-0
+                        group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 delay-75
+                        bg-[#2C1503] text-[#C4A882] text-[0.6rem] font-bold tracking-widest uppercase px-2.5 py-1 rounded">Premium</div>
+        </div>
+        <div class="p-4 flex-1 flex flex-col">
+            <h3 class="font-display text-[#2C1503] text-base font-semibold leading-snug mb-1.5">${p.name}</h3>
+            <p class="text-[#8a7060] text-xs leading-relaxed font-light line-clamp-2 flex-1">${p.description ?? ''}</p>
+            <div class="flex items-center gap-0.5 mt-3">
+                ${stars}
+                <span class="text-[#9E8A7A] text-[0.7rem] ml-1.5">${p.average_rating ?? '—'}</span>
+            </div>
+        </div>
+        <div class="px-4 pb-4 pt-3 border-t border-[#6f4e37]/10 flex flex-col gap-2">
+            <p class="font-display text-[#6f4e37] text-xl font-bold">
+                <sup class="text-xs font-sans font-normal">₱</sup>${parseFloat(p.price).toFixed(2)}
+            </p>
+            <div class="flex gap-2">
+                <button type="button"
+                        data-product-id="${p.id}" data-product-name="${esc(p.name)}"
+                        data-product-price="${p.price}" data-product-image="${p.image}"
+                        data-product-description="${esc(p.description)}" data-product-rating="${p.average_rating}"
+                        onclick="handleAddToCart(event,this)"
+                        class="btn-cart relative overflow-hidden flex-1 flex items-center justify-center gap-1.5
+                               border-2 border-[#6f4e37]/50 text-[#6f4e37] text-[0.65rem] font-bold tracking-widest uppercase
+                               py-2 rounded-xl hover:border-[#6f4e37] hover:bg-[#6f4e37]/8 transition-all duration-200 active:scale-95">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                    <span class="cart-label relative z-10">Cart</span>
+                </button>
+                <button type="button"
+                        data-product-id="${p.id}" data-product-name="${esc(p.name)}"
+                        data-product-price="${p.price}" data-product-image="${p.image}"
+                        data-product-description="${esc(p.description)}" data-product-rating="${p.average_rating}"
+                        onclick="handleBuyNow(event,this)"
+                        class="btn-buy relative overflow-hidden flex-1 flex items-center justify-center gap-1.5
+                               bg-[#2C1503] text-[#C4A882] text-[0.65rem] font-bold tracking-widest uppercase
+                               py-2 rounded-xl hover:bg-[#6f4e37] hover:text-white transition-all duration-200 active:scale-95">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <span class="buy-label relative z-10">Buy Now</span>
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   CART
+   ══════════════════════════════════════════════════════ */
+function updateCartBadge() {
+    const badge = document.getElementById('cart-count');
+    badge.textContent = _cartCount;
+    badge.classList.remove('hidden');
+    badge.classList.remove('badge-pop');
+    void badge.offsetWidth;
+    badge.classList.add('badge-pop');
+}
+
+/* ══════════════════════════════════════════════════════
+   SHARED HELPERS
+   ══════════════════════════════════════════════════════ */
+function spawnRipple(e, btn) {
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const r    = document.createElement('span');
+    r.className = 'ripple-el';
+    r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+    btn.appendChild(r);
+    r.addEventListener('animationend', () => r.remove());
+}
+
 function getProductData(btn) {
     return {
-        id:          btn.dataset.productId,
-        name:        btn.dataset.productName,
-        price:       btn.dataset.productPrice,
-        image:       btn.dataset.productImage,
-        description: btn.dataset.productDescription,
-        rating:      btn.dataset.productRating,
+        id: btn.dataset.productId, name: btn.dataset.productName,
+        price: btn.dataset.productPrice, image: btn.dataset.productImage,
+        description: btn.dataset.productDescription, rating: btn.dataset.productRating,
     };
 }
 
-/* ── Add to Cart ── */
 function handleAddToCart(e, btn) {
     spawnRipple(e, btn);
     const product = getProductData(btn);
 
-    // TODO: wire your cart logic here
-    // e.g. fetch('/cart/add/', { method:'POST', body: JSON.stringify({ id: product.id, qty: 1 }) })
-
-    // Feedback
-    const label = btn.querySelector('.cart-label');
-    label.textContent = '✓ Added';
-    btn.classList.add('!border-green-600', '!text-green-600');
-    setTimeout(() => {
-        label.textContent = 'Cart';
-        btn.classList.remove('!border-green-600', '!text-green-600');
-    }, 1400);
+    fetch(`/cart/add/${product.id}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            product_id: product.id,
+            quantity: 1
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Server error');
+        return res.json();
+    })
+    .then(data => {
+        if (!data.success) throw new Error(data.error);
+        _cartCount = data.cart_total;   // use server count
+        updateCartBadge();
+        const label = btn.querySelector('.cart-label');
+        label.textContent = '✓ Added';
+        btn.classList.add('!border-green-600', '!text-green-600');
+        setTimeout(() => {
+            label.textContent = 'Cart';
+            btn.classList.remove('!border-green-600', '!text-green-600');
+        }, 1400);
+    })
+    .catch(err => {
+        console.error('Error:', err);
+    });
 }
 
-/* ── Buy Now → open modal ── */
 function handleBuyNow(e, btn) {
     spawnRipple(e, btn);
-    const product = getProductData(btn);
-
-    // Opens the buy modal (buy_modal.html must be included on the page)
-    openBuyModal(product);
+    openBuyModal(getProductData(btn));
 }
 
-/* ── Scroll-triggered reveal for cards below the fold ── */
-const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.style.animationPlayState = 'running';
-            observer.unobserve(entry.target);
-        }
+function attachScrollReveal() {
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(en => {
+            if (en.isIntersecting) { en.target.style.animationPlayState = 'running'; obs.unobserve(en.target); }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.animate-fade-up').forEach((c, i) => {
+        if (i >= 4) { c.style.animationPlayState = 'paused'; obs.observe(c); }
     });
-}, { threshold: 0.1 });
+}
 
-document.querySelectorAll('.animate-fade-up').forEach((card, i) => {
-    if (i >= 4) {
-        card.style.animationPlayState = 'paused';
-        observer.observe(card);
-    }
-});
+// Init scroll reveal on server-rendered cards
+attachScrollReveal();
 </script>
 {% endblock %}
