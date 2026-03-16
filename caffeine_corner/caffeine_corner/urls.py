@@ -19,6 +19,13 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from unfold.sites import UnfoldAdminSite
+
+class CaffeineAdminSite(UnfoldAdminSite):
+    index_template = "unfold/dashboard.html"
+
+# Override the default admin site
+admin_site = CaffeineAdminSite(name="admin")
 
 urlpatterns = [
     path('admin/', admin.site.urls),

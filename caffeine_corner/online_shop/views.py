@@ -4,6 +4,9 @@ from .models import Product, Category, Variant, Rating, Order, CartItem
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+import requests
+import base64
+import os
 # Create your views here.
 
 def welcome(request):
@@ -112,17 +115,6 @@ def search(request):
         ]
     })    
 
-def buyProduct(request, product_id):
-    product = Product.objects.get(id=product_id)
-    data = {
-        'name': product.name,
-        'price': product.price,
-        'image': product.image.url,
-        'description': product.description,
-        'rating': product.average_rating,
-    }
-    return JsonResponse(data)
-
 # views.py
 @require_POST
 def addToCart(request, product_id):
@@ -168,3 +160,114 @@ def removeFromCart(request, cart_item_id):
 def clearCart(request):
     CartItem.objects.filter(user=request.user).delete()
     return JsonResponse({'success': True})
+
+def create_paymongo_source(amount_cents, success_url, failed_url):
+    secret_key = os.getenv("PAYMONGO_SKEY")
+    encoded    = base64.b64encode(f"{secret_key}:".encode()).decode()
+    res = requests.post(
+        "https://api.paymongo.com/v1/sources",
+        headers={
+            "Authorization": f"Basic {encoded}",
+            "Content-Type":  "application/json"
+        },
+        json={
+            "data": {
+                "attributes": {
+                    "amount":   amount_cents,
+                    "currency": "PHP",
+                    "type":     "gcash",
+                    "redirect": {
+                        "success": success_url,
+                        "failed":  failed_url
+                    }
+                }
+            }
+        }
+    )
+    return res.json()
+
+def checkout(request, product_id):
+    product  = get_object_or_404(Product, id=product_id)
+    variants = product.variants.all()  # get all sizes
+    error    = request.GET.get('error')
+    error_message = 'Payment setup failed. Please try again.' if error == 'payment_failed' else None
+    return render(request, 'home/checkout.html', {
+        'product':       product,
+        'variants':      variants,
+        'error_message': error_message,
+    })
+
+def placeOrder(request):
+    if request.method != 'POST':
+        return redirect('home')
+
+    product_id = request.POST.get('product_id')
+    variant_id = request.POST.get('variant_id')  # ← new
+    quantity   = int(request.POST.get('quantity', 1))
+    email      = request.POST.get('email')
+    address    = request.POST.get('address')
+    notes      = request.POST.get('notes', '')
+    payment_method = request.POST.get('payment_method', 'cod')
+    gcash_ref      = request.POST.get('gcash_ref', '')
+
+    product = get_object_or_404(Product, id=product_id, is_available=True)
+    user    = request.user if request.user.is_authenticated else None
+
+    # Get variant if selected
+    variant = None
+    if variant_id:
+        variant = get_object_or_404(Variant, id=variant_id, product=product)
+
+    # Calculate total price with variant additional price
+    unit_price   = product.price + (variant.additional_price if variant else 0)
+    amount_cents = int(unit_price * quantity * 100)
+
+    if payment_method == 'gcash':
+        order = Order.objects.create(
+            user=user, email=email, address=address, notes=notes,
+            product=product, variant=variant, quantity=quantity,
+            payment_method='gcash', payment_status='unpaid',
+            gcash_ref=gcash_ref,
+        )
+        try:
+            success_url  = request.build_absolute_uri(f'/order/success/?order_id={order.id}')
+            failed_url   = request.build_absolute_uri(f'/order/failed/?order_id={order.id}')
+            data         = create_paymongo_source(amount_cents, success_url, failed_url)
+            source       = data['data']
+            checkout_url = source['attributes']['redirect']['checkout_url']
+            order.paymongo_id = source['id']
+            order.save()
+            return redirect(checkout_url)
+        except Exception as e:
+            order.delete()
+            return redirect(f'/checkout/{product_id}/?error=payment_failed')
+    else:
+        Order.objects.create(
+            user=user, email=email, address=address, notes=notes,
+            product=product, variant=variant, quantity=quantity,
+            payment_method='cod', payment_status='unpaid',
+        )
+        return redirect('/?order=success')
+    
+def orderSuccess(request):
+    order_id = request.GET.get('order_id')
+    if order_id:
+        order = Order.objects.filter(id=order_id).first()
+        if order:
+            order.payment_status = 'paid'
+            order.status         = 'confirmed'
+            order.save()
+    # Render home with success flag — JS will show the overlay
+    return redirect('/?order=success')
+
+
+def orderFailed(request):
+    order_id = request.GET.get('order_id')
+    if order_id:
+        order = Order.objects.filter(id=order_id).first()
+        if order:
+            order.payment_status = 'failed'
+            order.status         = 'cancelled'
+            order.save()
+    return redirect('/?order=failed')
+

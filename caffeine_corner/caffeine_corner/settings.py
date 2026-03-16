@@ -222,7 +222,7 @@ SESSION_COOKIE_AGE = 3600
 
 UNFOLD = {
     "DASHBOARD_CALLBACK": "inventory.views.dashboard_callback",
- 
+    "INDEX_TITLE": "Dashboard",
     "SITE_TITLE": "Caffeine Corner",
     "SITE_HEADER": "Caffeine Corner",
     "SITE_SUBHEADER": "Store Management",
@@ -249,12 +249,12 @@ UNFOLD = {
     },
  
     "LOGIN": {
-        "image": "img/Background.jpg",
+        "image": "img/Background.jpeg",
         "redirect_after": "/admin/",
     },
- 
+
     "STYLES": [
-        lambda request: static("css/caffeine_unfold.css"),
+        lambda request: static("css/login_fix.css"),
     ],
  
     "SIDEBAR": {
@@ -316,9 +316,34 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": _("Inventory"),
+                        "title": _("Inventory Items"),
                         "icon": "inventory_2",
                         "link": reverse_lazy("admin:inventory_inventory_changelist"),
+                    },
+                    {
+                        "title": _("Stock Movements"),
+                        "icon": "swap_vert",
+                        "link": reverse_lazy("admin:inventory_stockmovement_changelist"),
+                    },
+                    {
+                        "title": _("Purchase Orders"),
+                        "icon": "local_shipping",
+                        "link": reverse_lazy("admin:inventory_purchaseorder_changelist"),
+                    },
+                    {
+                        "title": _("Suppliers"),
+                        "icon": "storefront",
+                        "link": reverse_lazy("admin:inventory_supplier_changelist"),
+                    },
+                    {
+                        "title": _("Inv. Categories"),
+                        "icon": "folder",
+                        "link": reverse_lazy("admin:inventory_inventorycategory_changelist"),
+                    },
+                    {
+                        "title": _("Ingredients"),
+                        "icon": "science",
+                        "link": reverse_lazy("admin:inventory_ingredient_changelist"),
                     },
                 ],
             },

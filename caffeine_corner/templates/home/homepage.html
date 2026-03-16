@@ -45,6 +45,8 @@
         height: 320px;
     }
 
+    @keyframes check-draw { to { stroke-dashoffset: 0; } }
+
     .delay-1 { animation-delay: 0.04s; }
     .delay-2 { animation-delay: 0.08s; }
     .delay-3 { animation-delay: 0.12s; }
@@ -101,23 +103,23 @@
         <div class="flex justify-end mb-8">
             {% if user.is_authenticated %}
             <a href="{% url 'cart' user.id %}"
-            class="group relative flex items-center gap-2.5
-                    bg-[#FDF9F4] border border-[#6f4e37]/20
-                    hover:bg-[#2C1503] hover:border-[#2C1503]
-                    pl-3 pr-4 py-2.5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
+               class="group relative flex items-center gap-2.5
+                      bg-[#FDF9F4] border border-[#6f4e37]/20
+                      hover:bg-[#2C1503] hover:border-[#2C1503]
+                      pl-3 pr-4 py-2.5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
                 <div class="relative">
                     <div class="w-8 h-8 rounded-xl bg-[#6f4e37]/10 group-hover:bg-[#C4A882]/15 flex items-center justify-center transition-colors duration-300">
                         <svg class="w-4 h-4 text-[#6f4e37] group-hover:text-[#C4A882] transition-colors duration-300"
-                            fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                             fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                             <line x1="3" y1="6" x2="21" y2="6"/>
                             <path d="M16 10a4 4 0 01-8 0"/>
                         </svg>
                     </div>
                     <span id="cart-count"
-                        class="absolute -top-1.5 -right-1.5 hidden min-w-[18px] h-[18px] px-1 rounded-full
-                                bg-[#6f4e37] group-hover:bg-[#C4A882] text-white group-hover:text-[#2C1503]
-                                text-[0.6rem] font-bold flex items-center justify-center transition-colors duration-300 leading-none">
+                          class="absolute -top-1.5 -right-1.5 hidden min-w-[18px] h-[18px] px-1 rounded-full
+                                 bg-[#6f4e37] group-hover:bg-[#C4A882] text-white group-hover:text-[#2C1503]
+                                 text-[0.6rem] font-bold flex items-center justify-center transition-colors duration-300 leading-none">
                         0
                     </span>
                 </div>
@@ -126,19 +128,19 @@
                     <span class="font-display text-[#2C1503] group-hover:text-[#C4A882] text-sm font-semibold tracking-wide transition-colors duration-300">Cart</span>
                 </div>
                 <svg class="w-3.5 h-3.5 text-[#6f4e37]/30 group-hover:text-[#C4A882]/50 group-hover:translate-x-0.5 transition-all duration-300"
-                    fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                     fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 18l6-6-6-6"/>
                 </svg>
             </a>
             {% else %}
             <a href="{% url 'signin' %}"
-            class="group relative flex items-center gap-2.5
-                    bg-[#FDF9F4] border border-[#6f4e37]/20
-                    hover:bg-[#2C1503] hover:border-[#2C1503]
-                    pl-3 pr-4 py-2.5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
+               class="group relative flex items-center gap-2.5
+                      bg-[#FDF9F4] border border-[#6f4e37]/20
+                      hover:bg-[#2C1503] hover:border-[#2C1503]
+                      pl-3 pr-4 py-2.5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
                 <div class="w-8 h-8 rounded-xl bg-[#6f4e37]/10 group-hover:bg-[#C4A882]/15 flex items-center justify-center transition-colors duration-300">
                     <svg class="w-4 h-4 text-[#6f4e37] group-hover:text-[#C4A882] transition-colors duration-300"
-                        fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                         fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                         <line x1="3" y1="6" x2="21" y2="6"/>
                         <path d="M16 10a4 4 0 01-8 0"/>
@@ -149,7 +151,7 @@
                     <span class="font-display text-[#2C1503] group-hover:text-[#C4A882] text-sm font-semibold tracking-wide transition-colors duration-300">Cart</span>
                 </div>
                 <svg class="w-3.5 h-3.5 text-[#6f4e37]/30 group-hover:text-[#C4A882]/50 group-hover:translate-x-0.5 transition-all duration-300"
-                    fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                     fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 18l6-6-6-6"/>
                 </svg>
             </a>
@@ -168,7 +170,6 @@
 
             <!-- Category pills -->
             <div class="flex gap-2 flex-wrap shrink-0" id="category-pills">
-                <!-- "All" pill — active by default on first load -->
                 <button type="button"
                         data-category="all"
                         onclick="filterProducts(this)"
@@ -195,7 +196,7 @@
             <div class="flex-1 h-px bg-gradient-to-l from-transparent to-[#6f4e37]/20"></div>
         </div>
 
-        <!-- ── PRODUCT GRID — server renders on first load, JS replaces on filter ── -->
+        <!-- Product grid -->
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {% for product in products %}
             <div class="group bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 overflow-hidden flex flex-col
@@ -216,8 +217,7 @@
                 <div class="p-4 flex-1 flex flex-col">
                     <h3 class="font-display text-[#2C1503] text-base font-semibold leading-snug mb-1.5">{{ product.name }}</h3>
                     <p class="text-[#8a7060] text-xs leading-relaxed font-light line-clamp-2 flex-1">{{ product.description }}</p>
-                    <div class="flex items-center gap-0.5 mt-3">
-                    </div>
+                    <div class="flex items-center gap-0.5 mt-3"></div>
                 </div>
                 <div class="px-4 pb-4 pt-3 border-t border-[#6f4e37]/10 flex flex-col gap-2">
                     <p class="font-display text-[#6f4e37] text-xl font-bold">
@@ -264,14 +264,14 @@
             {% endfor %}
         </div>
 
-        <!-- Empty state (hidden by default) -->
+        <!-- Empty state -->
         <div id="empty-state" class="hidden flex-col items-center justify-center py-24 text-center">
             <p class="text-5xl mb-4">☕</p>
             <p class="font-display text-[#2C1503] text-xl font-semibold mb-2">No products found</p>
             <p class="text-[#8a7060] text-sm font-light">Try a different category</p>
         </div>
 
-        <!-- ── SHOW ALL / SHOW LESS — only text + count changes, no reload ── -->
+        <!-- Show All / Show Less -->
         <div class="mt-16 text-center">
             <button id="toggle-btn" type="button" onclick="toggleShowAll()"
                     class="group inline-flex items-center gap-2
@@ -291,21 +291,80 @@
     </div>
 </div>
 
+<!-- ── ORDER RESULT OVERLAY ──────────────────────────── -->
+<div id="order-overlay"
+     class="fixed inset-0 z-50 hidden items-center justify-center
+            bg-[#2C1503]/70 backdrop-blur-sm px-6">
+    <div id="overlay-card"
+         class="bg-[#FDF9F4] rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center
+                translate-y-8 opacity-0 transition-all duration-500">
+
+        <!-- Success -->
+        <div id="overlay-success" class="hidden flex-col items-center gap-4">
+            <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor"
+                     stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-dasharray="60" stroke-dashoffset="60" id="check-path"
+                          stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-display text-[#2C1503] text-2xl font-bold mb-1">Order Placed!</p>
+                <p class="text-[#8a7060] text-sm font-light leading-relaxed">
+                    Your order is confirmed. Sit back and enjoy! ☕
+                </p>
+            </div>
+            <a href="{% url 'home' %}"
+               class="w-full bg-[#2C1503] text-[#C4A882] font-bold text-xs tracking-widest uppercase
+                      py-3.5 rounded-2xl hover:bg-[#6f4e37] hover:text-white transition-all duration-200
+                      flex items-center justify-center gap-2 mt-2">
+                Continue Shopping
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
+                     viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Failed -->
+        <div id="overlay-failed" class="hidden flex-col items-center gap-4">
+            <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor"
+                     stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-display text-[#2C1503] text-2xl font-bold mb-1">Payment Failed</p>
+                <p class="text-[#8a7060] text-sm font-light">
+                    Your order was not completed. Please try again.
+                </p>
+            </div>
+            <a href="{% url 'home' %}"
+               class="w-full bg-[#2C1503] text-[#C4A882] font-bold text-xs tracking-widest uppercase
+                      py-3.5 rounded-2xl hover:bg-[#6f4e37] hover:text-white transition-all duration-200
+                      flex items-center justify-center gap-2 mt-2">
+                Back to Shop
+            </a>
+        </div>
+
+    </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════════════════
    STATE
    ══════════════════════════════════════════════════════ */
-const PAGE_SIZE   = 8;                          // products shown before "View All"
-let _allProducts  = [];                         // full list for current category
-let _showAll      = {{ show_all|yesno:"true,false" }};
-let _activeCat    = 'all';
-let _cartCount    = 0;
+const PAGE_SIZE  = 8;
+let _allProducts = [];
+let _showAll     = {{ show_all|yesno:"true,false" }};
+let _activeCat   = 'all';
+let _cartCount   = 0;
 
 /* ══════════════════════════════════════════════════════
    CATEGORY FILTER
    ══════════════════════════════════════════════════════ */
 function filterProducts(pill) {
-    // 1. Swap active pill style instantly
     document.querySelectorAll('.cat-pill').forEach(p => {
         p.classList.remove('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
         p.classList.add('border-[#6f4e37]/40', 'text-[#6f4e37]');
@@ -314,32 +373,23 @@ function filterProducts(pill) {
     pill.classList.add('bg-[#6f4e37]', 'text-white', 'border-[#6f4e37]');
 
     _activeCat = pill.dataset.category;
-    _showAll   = false;   // reset to collapsed when switching category
-
-    // 2. Skeleton while fetching
+    _showAll   = false;
     showSkeletons();
 
-    // 3. Fetch JSON from Django
     const url = _activeCat === 'all'
-        ? '/all-products/'               // → returns all products as JSON
-        : `/category/${_activeCat}/`;  // → filtered
+        ? '/all-products/'
+        : `/category/${_activeCat}/`;
 
     fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-        .then(data => {
-            _allProducts = data.products;
-            renderVisible();
-        })
+        .then(data => { _allProducts = data.products; renderVisible(); })
         .catch(() => {
-            // Graceful fallback — navigate to category page if API not wired
-            window.location.href = _activeCat === 'all'
-                ? '/'
-                : `/category/${_activeCat}/`;
+            window.location.href = _activeCat === 'all' ? '/' : `/category/${_activeCat}/`;
         });
 }
 
 /* ══════════════════════════════════════════════════════
-   SHOW ALL / SHOW LESS  — only rerenders, no fetch
+   SHOW ALL / SHOW LESS
    ══════════════════════════════════════════════════════ */
 function toggleShowAll() {
     _showAll = !_showAll;
@@ -347,20 +397,18 @@ function toggleShowAll() {
 }
 
 /* ══════════════════════════════════════════════════════
-   RENDER — slices _allProducts based on _showAll flag
+   RENDER
    ══════════════════════════════════════════════════════ */
 function renderVisible() {
     const visible = _showAll ? _allProducts : _allProducts.slice(0, PAGE_SIZE);
     const total   = _allProducts.length;
-
-    // Update toggle button text
-    const label = document.getElementById('toggle-label');
-    const count = document.getElementById('toggle-count');
-    const icon  = document.getElementById('toggle-icon');
-    const btn   = document.getElementById('toggle-btn');
+    const label   = document.getElementById('toggle-label');
+    const count   = document.getElementById('toggle-count');
+    const icon    = document.getElementById('toggle-icon');
+    const btn     = document.getElementById('toggle-btn');
 
     if (total <= PAGE_SIZE) {
-        btn.classList.add('hidden');           // no button needed if fits in one page
+        btn.classList.add('hidden');
     } else {
         btn.classList.remove('hidden');
         if (_showAll) {
@@ -374,7 +422,6 @@ function renderVisible() {
         }
     }
 
-    // Render cards
     const empty = document.getElementById('empty-state');
     const grid  = document.getElementById('product-grid');
 
@@ -391,7 +438,7 @@ function renderVisible() {
 }
 
 /* ══════════════════════════════════════════════════════
-   SKELETON PLACEHOLDERS
+   SKELETONS
    ══════════════════════════════════════════════════════ */
 function showSkeletons(count = 4) {
     document.getElementById('empty-state').classList.add('hidden');
@@ -477,6 +524,7 @@ function makeCardHTML(p, index) {
    ══════════════════════════════════════════════════════ */
 function updateCartBadge() {
     const badge = document.getElementById('cart-count');
+    if (!badge) return;
     badge.textContent = _cartCount;
     badge.classList.remove('hidden');
     badge.classList.remove('badge-pop');
@@ -485,7 +533,7 @@ function updateCartBadge() {
 }
 
 /* ══════════════════════════════════════════════════════
-   SHARED HELPERS
+   HELPERS
    ══════════════════════════════════════════════════════ */
 function spawnRipple(e, btn) {
     const rect = btn.getBoundingClientRect();
@@ -499,9 +547,12 @@ function spawnRipple(e, btn) {
 
 function getProductData(btn) {
     return {
-        id: btn.dataset.productId, name: btn.dataset.productName,
-        price: btn.dataset.productPrice, image: btn.dataset.productImage,
-        description: btn.dataset.productDescription, rating: btn.dataset.productRating,
+        id:          btn.dataset.productId,
+        name:        btn.dataset.productName,
+        price:       btn.dataset.productPrice,
+        image:       btn.dataset.productImage,
+        description: btn.dataset.productDescription,
+        rating:      btn.dataset.productRating,
     };
 }
 
@@ -511,22 +562,13 @@ function handleAddToCart(e, btn) {
 
     fetch(`/cart/add/${product.id}/`, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            product_id: product.id,
-            quantity: 1
-        })
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: product.id, quantity: 1 })
     })
-    .then(res => {
-        if (!res.ok) throw new Error('Server error');
-        return res.json();
-    })
+    .then(res => { if (!res.ok) throw new Error('Server error'); return res.json(); })
     .then(data => {
         if (!data.success) throw new Error(data.error);
-        _cartCount = data.cart_total;   // use server count
+        _cartCount = data.cart_total;
         updateCartBadge();
         const label = btn.querySelector('.cart-label');
         label.textContent = '✓ Added';
@@ -536,16 +578,51 @@ function handleAddToCart(e, btn) {
             btn.classList.remove('!border-green-600', '!text-green-600');
         }, 1400);
     })
-    .catch(err => {
-        console.error('Error:', err);
-    });
+    .catch(err => console.error('Cart error:', err));
 }
 
+/* ── Buy Now → checkout page ── */
 function handleBuyNow(e, btn) {
     spawnRipple(e, btn);
-    openBuyModal(getProductData(btn));
+    const product = getProductData(btn);
+    window.location.href = `/checkout/${product.id}`;  // matches path('checkout/<int:product_id>', ...)
 }
 
+/* ══════════════════════════════════════════════════════
+   ORDER RESULT OVERLAY
+   Triggered when Django redirects back with ?order=success or ?order=failed
+   ══════════════════════════════════════════════════════ */
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('order');
+    if (result !== 'success' && result !== 'failed') return;
+
+    const overlay = document.getElementById('order-overlay');
+    const card    = document.getElementById('overlay-card');
+    const stateEl = document.getElementById(`overlay-${result}`);
+
+    stateEl.classList.remove('hidden');
+    stateEl.classList.add('flex');
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        card.classList.remove('translate-y-8', 'opacity-0');
+        card.classList.add('translate-y-0', 'opacity-100');
+    }));
+
+    if (result === 'success') {
+        const path = document.getElementById('check-path');
+        if (path) path.style.animation = 'check-draw 0.5s ease 0.3s forwards';
+    }
+
+    // Clean ?order= from URL so refresh doesn't re-show the overlay
+    window.history.replaceState({}, '', window.location.pathname);
+})();
+
+/* ══════════════════════════════════════════════════════
+   SCROLL REVEAL
+   ══════════════════════════════════════════════════════ */
 function attachScrollReveal() {
     const obs = new IntersectionObserver(entries => {
         entries.forEach(en => {
@@ -557,7 +634,6 @@ function attachScrollReveal() {
     });
 }
 
-// Init scroll reveal on server-rendered cards
 attachScrollReveal();
 </script>
 {% endblock %}

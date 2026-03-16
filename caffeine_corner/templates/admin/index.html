@@ -1,25 +1,348 @@
-{% extends 'admin/base.html' %}
+{% extends "unfold/layouts/base.html" %}
+{% load i18n static %}
 
-{% load i18n %}
-{% load static %}
+{% block content %}
+<div class="px-6 py-6 lg:px-8">
 
-{% block title %}
-    {% if subtitle %}
-        {{ subtitle }} |
-    {% endif %}
+  {# ── Heading ───────────────────────────────────────────────────────────── #}
+  <div class="mb-8">
+    <h1 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;">
+      Good day, {{ request.user.username|capfirst }} ☕
+    </h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      Here's what's brewing at Caffeine Corner today.
+    </p>
+  </div>
 
-    {{ title }} | {{ site_title|default:_('Caffeine Corner admin') }}
-{% endblock %}
-
-{% block branding %}
-    <div class="flex items-center gap-3 px-4 py-3">
-        <img src="{% static 'img/Logo.jpg' %}" 
-            alt="Logo"
-            class="h-9 w-auto rounded-md shadow">
-
-        <span class="text-md font-bold tracking-wide font-montserrat">
-            CAFFEINE CORNER Admin
+  {# ── Stat cards ────────────────────────────────────────────────────────── #}
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    {% for label, value, icon in stat_cards %}
+    <div class="rounded-xl bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700 p-5">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-xs font-medium uppercase tracking-widest text-gray-400">
+          {{ label }}
+        </p>
+        <span class="material-symbols-outlined"
+              style="font-size:18px; color: rgb(160 105 55); opacity:.7;">
+          {{ icon }}
         </span>
+      </div>
+      <p style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;
+                color: rgb(26 10 0);" class="dark:!text-white">
+        {{ value }}
+      </p>
     </div>
-{% endblock %}
+    {% empty %}
+    {# Fallback if stat_cards not passed — render individually #}
+    <div class="rounded-xl bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700 p-5">
+      <p class="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+        Total Orders
+      </p>
+      <p style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;">
+        {{ total_orders|default:"0" }}
+      </p>
+    </div>
+    <div class="rounded-xl bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700 p-5">
+      <p class="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+        Revenue
+      </p>
+      <p style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;">
+        {% if total_revenue %}₱{{ total_revenue|floatformat:0 }}{% else %}₱0{% endif %}
+      </p>
+    </div>
+    <div class="rounded-xl bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700 p-5">
+      <p class="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+        Active Products
+      </p>
+      <p style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;">
+        {{ total_products|default:"0" }}
+      </p>
+    </div>
+    <div class="rounded-xl bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700 p-5">
+      <p class="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+        Avg Rating
+      </p>
+      <p style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;
+                color: rgb(160 105 55);">
+        {% if avg_rating %}{{ avg_rating }} ★{% else %}—{% endif %}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
 
+  {# ── Low stock alert banner ────────────────────────────────────────────── #}
+  {% if low_stock_count %}
+  <div class="mb-6 flex items-center gap-3 rounded-xl px-5 py-3"
+       style="background:#fff6e0; border:1px solid #f0c060;">
+    <span class="material-symbols-outlined" style="color:#a06010;font-size:20px;">
+      warning
+    </span>
+    <p class="text-sm font-medium" style="color:#7a4800;">
+      {{ low_stock_count }} inventory item{{ low_stock_count|pluralize }}
+      below reorder point
+    </p>
+    <a href="{% url 'admin:inventory_inventory_changelist' %}"
+       class="ml-auto text-xs font-semibold" style="color:#a06010;">
+      View →
+    </a>
+  </div>
+  {% endif %}
+
+  {# ── Orders per day chart ─────────────────────────────────────────────── #}
+  <div class="rounded-xl bg-white dark:bg-gray-800
+              border border-gray-200 dark:border-gray-700 p-5 mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 style="font-family:'Playfair Display',serif;font-size:15px;font-weight:600;"
+          class="text-gray-800 dark:text-gray-200">
+        Orders — Last 30 Days
+      </h2>
+      <span class="text-xs text-gray-400 dark:text-gray-500">Daily order count</span>
+    </div>
+    <div style="height:220px;position:relative;">
+      <canvas id="ordersChart"></canvas>
+    </div>
+  </div>
+
+  {# ── Main grid ─────────────────────────────────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    {# ── Recent Orders — spans 2 cols ──────────────────────────────────── #}
+    <div class="lg:col-span-2 rounded-xl bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4
+                  border-b border-gray-100 dark:border-gray-700">
+        <h2 style="font-family:'Playfair Display',serif;font-size:15px;font-weight:600;"
+            class="text-gray-800 dark:text-gray-200">
+          Recent Orders
+        </h2>
+        <a href="{% url 'admin:online_shop_order_changelist' %}"
+           class="text-xs font-semibold" style="color:rgb(160 105 55);">
+          View all →
+        </a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr style="background:#faf7f2;" class="dark:bg-gray-900/50">
+            <th class="px-4 py-3 text-left" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:#7a6652;border-bottom:1px solid #e8ddd0;">#</th>
+            <th class="px-4 py-3 text-left" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:#7a6652;border-bottom:1px solid #e8ddd0;">Customer</th>
+            <th class="px-4 py-3 text-left" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:#7a6652;border-bottom:1px solid #e8ddd0;">Product</th>
+            <th class="px-4 py-3 text-left" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:#7a6652;border-bottom:1px solid #e8ddd0;">Size</th>
+            <th class="px-4 py-3 text-left" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:#7a6652;border-bottom:1px solid #e8ddd0;">Qty</th>
+            <th class="px-4 py-3 text-left" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:#7a6652;border-bottom:1px solid #e8ddd0;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in recent_orders %}
+            <tr style="border-bottom:1px solid #e8ddd0;"
+                class="hover:bg-amber-50 dark:hover:bg-gray-700/40 transition-colors">
+              <td class="px-4 py-3 text-xs text-gray-400">#{{ order.id }}</td>
+              <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                {{ order.user.username }}
+              </td>
+              <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                {{ order.product.name }}
+              </td>
+              <td class="px-4 py-3">
+                {% if order.variant %}
+                  <span style="background:#f1efe8;color:#5f5e5a;font-size:11px;
+                               padding:2px 8px;border-radius:4px;font-weight:500;">
+                    {{ order.variant.get_size_display }}
+                  </span>
+                {% else %}
+                  <span class="text-gray-300">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+                {{ order.quantity }}
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-400">
+                {{ order.created_at|date:"M d, Y" }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-5 py-10 text-center text-sm text-gray-400">
+                No orders yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ── Right column ──────────────────────────────────────────────────── #}
+    <div class="flex flex-col gap-6">
+
+      {# Low Stock #}
+      <div class="rounded-xl bg-white dark:bg-gray-800
+                  border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4
+                    border-b border-gray-100 dark:border-gray-700">
+          <h2 style="font-family:'Playfair Display',serif;font-size:15px;font-weight:600;"
+              class="text-gray-800 dark:text-gray-200">
+            Low Stock
+          </h2>
+          {% if low_stock_count %}
+          <span style="background:#fef0ee;color:#c04a3a;font-size:11px;
+                       font-weight:600;padding:2px 8px;border-radius:99px;">
+            {{ low_stock_count }}
+          </span>
+          {% endif %}
+        </div>
+        <ul>
+          {% for item in low_stock_items %}
+          <li class="flex items-start justify-between gap-2 px-5 py-3"
+              style="border-bottom:1px solid #f3f0ec;">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                {{ item.name }}
+              </p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ item.sku }}</p>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-sm font-bold" style="color:#c04a3a;">
+                {{ item.quantity_on_hand }} {{ item.unit }}
+              </p>
+              <p class="text-xs text-gray-400">min {{ item.reorder_points }}</p>
+            </div>
+          </li>
+          {% empty %}
+          <li class="px-5 py-6 text-center text-sm text-gray-400">
+            All stock levels OK ✓
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      {# Top Customers #}
+      <div class="rounded-xl bg-white dark:bg-gray-800
+                  border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4
+                    border-b border-gray-100 dark:border-gray-700">
+          <h2 style="font-family:'Playfair Display',serif;font-size:15px;font-weight:600;"
+              class="text-gray-800 dark:text-gray-200">
+            Top Customers
+          </h2>
+          <a href="{% url 'admin:online_shop_loyaltypoint_changelist' %}"
+             class="text-xs font-semibold" style="color:rgb(160 105 55);">
+            View all →
+          </a>
+        </div>
+        <ul>
+          {% for lp in top_customers %}
+          <li class="flex items-center gap-3 px-5 py-3"
+              style="border-bottom:1px solid #f3f0ec;">
+            <span class="text-xs font-bold w-4 flex-shrink-0"
+                  style="color:rgb(160 105 55);">
+              {{ forloop.counter }}
+            </span>
+            <div class="w-8 h-8 rounded-full flex items-center justify-center
+                        flex-shrink-0 text-xs font-bold text-white"
+                 style="background:rgb(160 105 55);">
+              {{ lp.user.username|slice:":1"|upper }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                {{ lp.user.get_full_name|default:lp.user.username }}
+              </p>
+              <p class="text-xs text-gray-400">@{{ lp.user.username }}</p>
+            </div>
+            <span class="text-sm font-bold flex-shrink-0"
+                  style="color:rgb(160 105 55);">
+              {{ lp.points }} pts
+            </span>
+          </li>
+          {% empty %}
+          <li class="px-5 py-6 text-center text-sm text-gray-400">
+            No loyalty points yet.
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function() {
+  const labels = {{ chart_labels|safe }};
+  const data   = {{ chart_data|safe }};
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const labelColor = isDark ? '#9ca3af' : '#7a6652';
+
+  const ctx = document.getElementById('ordersChart');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Orders',
+        data: data,
+        backgroundColor: 'rgba(160, 105, 55, 0.75)',
+        hoverBackgroundColor: 'rgba(160, 105, 55, 1)',
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a0a00',
+          titleColor: '#e8ddd0',
+          bodyColor: '#c47a2b',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} order${ctx.parsed.y !== 1 ? 's' : ''}`,
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: labelColor,
+            font: { size: 10 },
+            maxRotation: 45,
+            maxTicksLimit: 10,
+          },
+          border: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: {
+            color: labelColor,
+            font: { size: 11 },
+            stepSize: 1,
+            precision: 0,
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+.login [type="submit"] {
+    background-color: rgb(160 105 55) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    opacity: 1 !important;
+}
+.login [type="submit"]:hover {
+    background-color: rgb(180 125 70) !important;
+}

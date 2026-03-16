@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.forms import ValidationError
 
 # Products
 class Category(models.Model):
@@ -60,12 +61,20 @@ class Product(models.Model):
             models.Index(fields=["-created_at"]),
             models.Index(fields=["is_available", "is_featured", "is_seasonal"]),
         ]
+
     @property
     def average_rating(self):
         ratings = self.ratings.all()
         if ratings.exists():
             return round(sum(r.rating for r in ratings) / ratings.count(), 1)
         return None
+
+    @property
+    def stock_available(self):
+        if hasattr(self, 'stock_item') and self.stock_item:
+            return self.stock_item.quantity_available
+        return 0
+
     def __str__(self):
         return f"{self.name} ({self.sku})"
 
@@ -92,6 +101,12 @@ class Variant(models.Model):
         verbose_name = "Variant"
         verbose_name_plural = "Variants"
 
+    @property
+    def stock_available(self):
+        if hasattr(self, 'variant_stock') and self.variant_stock:
+            return self.variant_stock.quantity_available
+        return 0
+
     def __str__(self):
         return f"{self.product.name} - {self.size}"
 
@@ -116,53 +131,74 @@ class Rating(models.Model):
 
 
 class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
+
+    STATUS_CHOICES = [
+        ('pending',    'Pending'),
+        ('confirmed',  'Confirmed'),
+        ('processing', 'Processing'),
+        ('delivered',  'Delivered'),
+        ('cancelled',  'Cancelled'),
+    ]
+
+    PAYMENT_METHOD_CHOICES = [
+        ('cod',   'Cash on Delivery'),
+        ('gcash', 'GCash'),
+    ]
+
+    PAYMENT_STATUS_CHOICES = [
+        ('unpaid',  'Unpaid'),
+        ('paid',    'Paid'),
+        ('failed',  'Failed'),
+        ('refunded','Refunded'),
+    ]
+
+    # ── Who ordered ──
+    user    = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # null = guest
+    email   = models.EmailField()           # required for both guest and logged in
+    address = models.TextField()
+    notes   = models.TextField(blank=True, default='')
+
+    # ── What was ordered ──
+    product  = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant  = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(9999)])
+
+    # ── Order status ──
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    # ── Payment ──
+    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='cod')
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
+    gcash_ref      = models.CharField(max_length=100, blank=True, default='')
+    paymongo_id    = models.CharField(max_length=100, blank=True, default='')  # PayMongo source ID
+
+    # ── Timestamps ──
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ("-created_at",)
         verbose_name = "Order"
         verbose_name_plural = "Orders"
         indexes = [
-            models.Index(fields=["user", "product", "variant"]),
+            models.Index(fields=["user", "product"]),
+            models.Index(fields=["payment_status"]),
+            models.Index(fields=["paymongo_id"]),
         ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.product.name} ({self.variant.size}) x {self.quantity}"
+        name = self.user.username if self.user else self.email
+        return f"{name} - {self.product.name} x {self.quantity}"
+    
     def clean(self):
-        if self.variant is None and self.user_id and self.product_id:
-            existing = Order.objects.filter(user_id=self.user_id, product_id=self.product_id, variant__isnull=True)
-            if self.pk:
-                existing = existing.exclude(pk=self.pk)
-            if existing.exists():
-                from django.core.exceptions import ValidationError
-                raise ValidationError("An order for this product without a variant already exists for this user.")
-        if self.variant is not None and self.user_id and self.product_id:
-            existing = Order.objects.filter(user_id=self.user_id, product_id=self.product_id, variant_id=self.variant_id)
-            if self.pk:
-                existing = existing.exclude(pk=self.pk)
-            if existing.exists():
-                from django.core.exceptions import ValidationError
-                raise ValidationError("An order for this product with a variant already exists for this user.")
+        if self.product and not self.product.is_available:
+            raise ValidationError("This product is no longer available.")
         if self.quantity < 1 or self.quantity > 9999:
             raise ValidationError("Quantity must be between 1 and 9999.")
-        if self.product.is_available is False:
-            raise ValidationError("Product is not available.")
-        if self.product.is_featured is False:
-            raise ValidationError("Product is not featured.")
-        if self.product.is_seasonal is False:
-            raise ValidationError("Product is not seasonal.")
-        if self.product.category.is_active is False:
-            raise ValidationError("Category is not active.")
 
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-        return self
+    @property
+    def total_price(self):
+        return self.product.price * self.quantity
 
 class CartItem(models.Model):
     """Cart items for MySQL-safe uniqueness.
