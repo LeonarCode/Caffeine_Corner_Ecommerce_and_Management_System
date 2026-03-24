@@ -192,8 +192,8 @@
                         <div class="flex justify-between items-center">
                             <span class="text-[#8a7060] text-sm font-light">Subtotal</span>
                             <span id="grand-subtotal" class="font-display text-[#2C1503] text-sm font-bold">
-                                ₱{% with total=0 %}{% for item in cart_items %}{% with total=total|add:item.subtotal %}{% endwith %}{% endfor %}{{ total|floatformat:2 }}{% endwith %}
-                            </span>
+                            ₱{{ cart_total|floatformat:2 }}
+                        </span>
                         </div>
 
                         <div class="flex justify-between items-center">
@@ -208,7 +208,7 @@
                         <div class="flex justify-between items-center">
                             <span class="font-display text-[#2C1503] text-base font-bold">Total</span>
                             <span id="grand-total" class="font-display text-[#6f4e37] text-2xl font-bold">
-                                ₱<span id="grand-total-value">{{ total|floatformat:2 |to_float }}</span>
+                                ₱<span id="grand-total-value">{{ cart_total|floatformat:2 }}</span>
                             </span>
                         </div>
 
@@ -266,7 +266,6 @@
             </a>
         </div>
         {% endif %}
-        
 
     </div>
 </div>
@@ -286,65 +285,114 @@ const cartState = {
 };
 
 /* ══════════════════════════════════════════════
-   QTY CHANGE
+   QTY CHANGE — optimistic UI + API sync
    ══════════════════════════════════════════════ */
 function changeQty(itemId, delta, btn) {
-    const state = cartState[itemId];
-    const newQty = state.qty + delta;
+    const state      = cartState[itemId];
+    const newQty     = state.qty + delta;
     if (newQty < 1) return;
 
+    // Save previous values for rollback
+    const prevQty      = state.qty;
+    const prevSubtotal = state.subtotal;
+
+    // ── Optimistic UI update ──
     state.qty      = newQty;
     state.subtotal = parseFloat((state.price * newQty).toFixed(2));
 
-    // Update qty display
-    document.getElementById(`qty-${itemId}`).textContent       = newQty;
-    document.getElementById(`summary-qty-${itemId}`).textContent = newQty;
-
-    // Update subtotals
-    const fmtSub = '₱' + state.subtotal.toFixed(2);
-    document.getElementById(`subtotal-${itemId}`).textContent  = fmtSub;
-    document.getElementById(`summary-sub-${itemId}`).textContent = '₱' + state.subtotal.toFixed(2);
-
-    // Recalculate grand total
+    document.getElementById(`qty-${itemId}`).textContent          = newQty;
+    document.getElementById(`summary-qty-${itemId}`).textContent  = newQty;
+    document.getElementById(`subtotal-${itemId}`).textContent     = '₱' + state.subtotal.toFixed(2);
+    document.getElementById(`summary-sub-${itemId}`).textContent  = '₱' + state.subtotal.toFixed(2);
     recalcTotal();
 
-    // TODO: persist to backend
-    // fetch(`/cart/update/${itemId}/`, {
-    //     method: 'POST',
-    //     headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ quantity: newQty })
-    // });
+    // Disable row buttons while saving
+    const row  = document.getElementById(`cart-item-${itemId}`);
+    const btns = row.querySelectorAll('button');
+    btns.forEach(b => b.disabled = true);
+
+    // ── Persist to server ──
+    fetch(`/cart/update/${itemId}/`, {
+        method:  'POST',
+        headers: {
+            'X-CSRFToken':  getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ quantity: newQty })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.error);
+        // Server grand total is source of truth
+        document.getElementById('grand-total-value').textContent = parseFloat(data.cart_total).toFixed(2);
+        if (document.getElementById('grand-subtotal')) {
+            document.getElementById('grand-subtotal').textContent = '₱' + parseFloat(data.cart_total).toFixed(2);
+        }
+    })
+    .catch(err => {
+        console.error('Update error:', err);
+        // ── Rollback on failure ──
+        state.qty      = prevQty;
+        state.subtotal = prevSubtotal;
+        document.getElementById(`qty-${itemId}`).textContent         = prevQty;
+        document.getElementById(`summary-qty-${itemId}`).textContent = prevQty;
+        document.getElementById(`subtotal-${itemId}`).textContent    = '₱' + prevSubtotal.toFixed(2);
+        document.getElementById(`summary-sub-${itemId}`).textContent = '₱' + prevSubtotal.toFixed(2);
+        recalcTotal();
+    })
+    .finally(() => {
+        btns.forEach(b => b.disabled = false);
+    });
 }
 
 /* ══════════════════════════════════════════════
-   REMOVE ITEM
+   REMOVE ITEM — animate out then delete
    ══════════════════════════════════════════════ */
 function removeItem(itemId, btn) {
-    const row = document.getElementById(`cart-item-${itemId}`);
+    const row        = document.getElementById(`cart-item-${itemId}`);
     const summaryRow = document.getElementById(`summary-row-${itemId}`);
 
-    // Animate out
+    // Prevent double click
+    btn.disabled = true;
+
+    // ── Animate out ──
     row.style.transition = 'all 0.3s ease';
     row.style.opacity    = '0';
     row.style.transform  = 'translateX(20px)';
 
-    setTimeout(() => {
-        row.remove();
-        if (summaryRow) summaryRow.remove();
-        delete cartState[itemId];
-        recalcTotal();
-        checkIfEmpty();
-    }, 300);
+    fetch(`/cart/remove/${itemId}/`, {
+        method:  'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.error);
 
-    // TODO: persist to backend
-    // fetch(`/cart/remove/${itemId}/`, {
-    //     method: 'POST',
-    //     headers: { 'X-CSRFToken': getCookie('csrftoken') }
-    // });
+        setTimeout(() => {
+            row.remove();
+            if (summaryRow) summaryRow.remove();
+            delete cartState[itemId];
+
+            // Update totals from server
+            document.getElementById('grand-total-value').textContent = parseFloat(data.cart_total).toFixed(2);
+            if (document.getElementById('grand-subtotal')) {
+                document.getElementById('grand-subtotal').textContent = '₱' + parseFloat(data.cart_total).toFixed(2);
+            }
+
+            checkIfEmpty();
+        }, 300);
+    })
+    .catch(err => {
+        console.error('Remove error:', err);
+        // ── Rollback animation ──
+        row.style.opacity   = '1';
+        row.style.transform = 'translateX(0)';
+        btn.disabled        = false;
+    });
 }
 
 /* ══════════════════════════════════════════════
-   RECALC TOTAL
+   RECALC TOTAL — local fallback
    ══════════════════════════════════════════════ */
 function recalcTotal() {
     const total = Object.values(cartState).reduce((sum, item) => sum + item.subtotal, 0);
@@ -359,7 +407,6 @@ function recalcTotal() {
    ══════════════════════════════════════════════ */
 function checkIfEmpty() {
     if (Object.keys(cartState).length === 0) {
-        // Reload to show empty state template block cleanly
         window.location.reload();
     }
 }
@@ -368,13 +415,14 @@ function checkIfEmpty() {
    CHECKOUT
    ══════════════════════════════════════════════ */
 function handleCheckout(btn) {
-    // TODO: wire to your checkout view
-    // window.location.href = '/checkout/';
     btn.innerHTML = `
         <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83
+                     M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
         </svg>
         Processing...`;
+    btn.disabled = true;
+    window.location.href = '/cart-checkout/';
 }
 
 /* ══════════════════════════════════════════════

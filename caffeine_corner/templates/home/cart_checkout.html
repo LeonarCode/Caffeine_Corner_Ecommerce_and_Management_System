@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}Checkout{% endblock %}
+{% block title %}Cart Checkout{% endblock %}
 
 {% block styles %}
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
@@ -35,6 +35,7 @@
         box-shadow: 0 0 0 3px rgba(111,78,55,0.08);
     }
     .field-input::placeholder { color: #b0998a; }
+    .field-input[readonly] { opacity: 0.6; cursor: not-allowed; }
 
     /* Payment card */
     .payment-card input[type="radio"] { display: none; }
@@ -42,8 +43,7 @@
         display: flex; align-items: center; gap: 12px;
         padding: 14px 16px; border-radius: 14px;
         border: 2px solid rgba(111,78,55,0.15);
-        cursor: pointer;
-        transition: all 0.2s ease;
+        cursor: pointer; transition: all 0.2s ease;
     }
     .payment-card label:hover { border-color: rgba(111,78,55,0.4); }
     .payment-card input[type="radio"]:checked + label {
@@ -74,28 +74,12 @@
     }
     #gcash-details.open { max-height: 300px; opacity: 1; }
 
-    /* Size button */
-    .size-btn {
-        padding: 8px 16px;
-        border-radius: 12px;
-        border: 2px solid rgba(111,78,55,0.2);
-        color: #6f4e37;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        background: transparent;
-        display: flex; flex-direction: column; align-items: center; gap: 1px;
+    /* Cart item row remove animation */
+    .cart-row.removing {
+        opacity: 0;
+        transform: translateX(20px);
+        transition: all 0.3s ease;
     }
-    .size-btn:hover { border-color: #6f4e37; background: rgba(111,78,55,0.05); }
-    .size-btn.active {
-        background: #6f4e37; color: white;
-        border-color: #6f4e37;
-    }
-    .size-btn.active .size-add { color: rgba(255,255,255,0.7); }
-    .size-add { font-size: 0.6rem; font-weight: 400; color: #8a7060; }
 </style>
 {% endblock %}
 
@@ -105,19 +89,29 @@
     <!-- ── PAGE HEADER ── -->
     <div class="bg-[#3D1F00] relative overflow-hidden">
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(196,168,130,0.10)_0%,transparent_65%)] pointer-events-none"></div>
-        <div class="max-w-6xl mx-auto px-6 py-10">
-            <p class="text-[#C4A882]/50 text-xs font-light tracking-widest uppercase mb-1">
-                <a href="{% url 'home' %}" class="hover:text-[#C4A882] transition-colors duration-200">Home</a>
-                <span class="mx-2">›</span> Checkout
-            </p>
-            <h1 class="font-display text-white text-3xl md:text-4xl font-bold leading-tight">
-                Complete Your <em class="text-[#C4A882] italic">Order</em>
-            </h1>
-            {% if user.is_authenticated %}
-            <p class="text-[#C4A882]/50 text-xs font-light mt-1">
-                Ordering as <span class="text-[#C4A882]">{{ user.email }}</span>
-            </p>
-            {% endif %}
+        <div class="max-w-6xl mx-auto px-6 py-10 flex items-end justify-between gap-4">
+            <div>
+                <p class="text-[#C4A882]/50 text-xs font-light tracking-widest uppercase mb-1">
+                    <a href="{% url 'home' %}" class="hover:text-[#C4A882] transition-colors duration-200">Home</a>
+                    <span class="mx-2">›</span>
+                    <a href="{% url 'cart' user.id %}" class="hover:text-[#C4A882] transition-colors duration-200">Cart</a>
+                    <span class="mx-2">›</span> Checkout
+                </p>
+                <h1 class="font-display text-white text-3xl md:text-4xl font-bold leading-tight">
+                    Complete Your <em class="text-[#C4A882] italic">Order</em>
+                </h1>
+                <p class="text-[#C4A882]/50 text-xs font-light mt-1">
+                    {{ cart_items.count }} item{{ cart_items.count|pluralize }} ·
+                    Ordering as <span class="text-[#C4A882]">{{ user.email }}</span>
+                </p>
+            </div>
+            <!-- Item count -->
+            <div class="shrink-0 bg-[#C4A882]/10 border border-[#C4A882]/20 px-4 py-2 rounded-2xl text-right">
+                <p class="text-[#C4A882]/60 text-[0.6rem] font-light tracking-widest uppercase">Total</p>
+                <p class="font-display text-[#C4A882] text-2xl font-bold leading-tight">
+                    ₱<span id="header-total">{{ cart_total|floatformat:2 }}</span>
+                </p>
+            </div>
         </div>
     </div>
 
@@ -131,34 +125,15 @@
         </div>
         {% endif %}
 
-        <form method="POST" action="{% url 'placeOrder' %}" id="checkout-form">
+        <form method="POST" action="{% url 'placeOrderFromCart' %}" id="checkout-form">
             {% csrf_token %}
-            <input type="hidden" name="product_id"     value="{{ product.id }}">
-            <input type="hidden" name="variant_id"     id="hidden-variant" value="">
-            <input type="hidden" name="quantity"        id="hidden-qty"     value="1">
-            <input type="hidden" name="payment_method"  id="hidden-payment" value="cod">
+            <input type="hidden" name="payment_method" id="hidden-payment" value="cod">
             <input type="hidden" name="points_to_use" id="hidden-points" value="0">
+
             <div class="flex flex-col lg:flex-row gap-8 items-start">
 
                 <!-- ── LEFT COLUMN ── -->
                 <div class="flex-1 flex flex-col gap-6">
-
-                    <!-- Guest notice -->
-                    {% if not user.is_authenticated %}
-                    <div class="opacity-0 animate-fade-up delay-1
-                                bg-[#FDF9F4] border border-[#6f4e37]/15 rounded-2xl px-5 py-4
-                                flex items-start gap-3">
-                        <span class="text-xl shrink-0 mt-0.5">☕</span>
-                        <div>
-                            <p class="text-[#2C1503] text-sm font-semibold mb-0.5">Ordering as guest</p>
-                            <p class="text-[#8a7060] text-xs font-light leading-relaxed">
-                                No account needed — just fill in your details below.
-                                <a href="{% url 'signin' %}" class="text-[#6f4e37] font-semibold hover:underline ml-1">Sign in</a>
-                                for faster checkout next time.
-                            </p>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     <!-- Contact & Delivery -->
                     <div class="bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 shadow-sm overflow-hidden
@@ -174,25 +149,25 @@
                         </div>
                         <div class="p-6 flex flex-col gap-4">
 
-                            <!-- Email -->
+                            <!-- Email — pre-filled, readonly for authenticated -->
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-[#8a7060] text-xs font-bold tracking-widest uppercase">
                                     Email Address <span class="text-red-400">*</span>
                                 </label>
-                                <input type="email" name="email" id="field-email"
-                                       value="{% if user.is_authenticated %}{{ user.email }}{% endif %}"
-                                       {% if user.is_authenticated %}readonly{% endif %}
-                                       placeholder="your@email.com" required
-                                       class="field-input {% if user.is_authenticated %}opacity-60 cursor-not-allowed{% endif %}">
+                                <input type="email" name="email"
+                                       value="{{ user.email }}"
+                                       readonly
+                                       required
+                                       class="field-input">
                                 <p class="text-[#8a7060] text-xs font-light">Order confirmation will be sent here.</p>
                             </div>
 
-                            <!-- Address -->
+                            <!-- Delivery Address -->
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-[#8a7060] text-xs font-bold tracking-widest uppercase">
                                     Delivery Address <span class="text-red-400">*</span>
                                 </label>
-                                <textarea name="address" id="field-address" rows="3"
+                                <textarea name="address" rows="3"
                                           placeholder="House No., Street, Barangay, City, Province"
                                           required class="field-input resize-none"></textarea>
                             </div>
@@ -204,7 +179,7 @@
                                     <span class="text-[#8a7060] font-light normal-case tracking-normal ml-1">(optional)</span>
                                 </label>
                                 <textarea name="notes" rows="2"
-                                          placeholder="Any special instructions or requests..."
+                                          placeholder="Any special instructions..."
                                           class="field-input resize-none"></textarea>
                             </div>
                         </div>
@@ -250,7 +225,7 @@
                             </div>
 
                             <!-- GCash details -->
-                           <!-- GCash details — ipaliwanag lang na ire-redirect sila -->
+                            <!-- GCash details — ipaliwanag lang na ire-redirect sila -->
                             <div id="gcash-details"
                                 class="bg-[#FAF6F0] rounded-xl border border-[#6f4e37]/15 px-4 py-4 flex flex-col gap-3">
                                 <div class="flex items-center gap-3">
@@ -275,91 +250,62 @@
                 </div>
 
                 <!-- ── ORDER SUMMARY ── -->
-                <div class="w-full lg:w-80 shrink-0 sticky top-6 opacity-0 animate-fade-up delay-3">
+                <div class="w-full lg:w-96 shrink-0 sticky top-6 opacity-0 animate-fade-up delay-3">
                     <div class="bg-[#FDF9F4] rounded-2xl border border-[#6f4e37]/10 shadow-sm overflow-hidden">
 
-                        <div class="bg-[#2C1503] px-6 py-5">
+                        <div class="bg-[#2C1503] px-6 py-5 flex items-center justify-between">
                             <p class="font-display text-[#C4A882] text-lg font-bold">Order Summary</p>
+                            <span class="text-[#C4A882]/60 text-xs font-light">
+                                {{ cart_items.count }} item{{ cart_items.count|pluralize }}
+                            </span>
                         </div>
 
-                        <div class="p-5 flex flex-col gap-4">
-
-                            <!-- Product -->
-                            <div class="flex gap-3 items-center pb-4 border-b border-[#6f4e37]/10">
-                                <div class="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-[#EDE0CC]">
-                                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                        <!-- Cart items list -->
+                        <div class="divide-y divide-[#6f4e37]/8 max-h-72 overflow-y-auto" id="summary-items">
+                            {% for item in cart_items %}
+                            {% with unit_price=item.product.price|add_variant_price:item.variant %}
+                            <div class="flex items-center gap-3 px-5 py-3 cart-row" id="summary-row-{{ item.id }}">
+                                <!-- Image -->
+                                <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#EDE0CC]">
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
                                          class="w-full h-full object-cover">
                                 </div>
+                                <!-- Info -->
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-display text-[#2C1503] text-sm font-semibold leading-snug">{{ product.name }}</p>
-                                    <p class="text-[#8a7060] text-xs font-light mt-0.5">Base ₱{{ product.price|floatformat:2 }}</p>
-                                    <!-- Selected size display -->
-                                    <p id="selected-size-label"
-                                       class="text-[#6f4e37] text-xs font-semibold mt-1 hidden">
+                                    <p class="text-[#2C1503] text-xs font-semibold truncate">{{ item.product.name }}</p>
+                                    {% if item.variant %}
+                                    <p class="text-[#8a7060] text-[0.65rem] font-light">{{ item.variant.get_size_display }}</p>
+                                    {% endif %}
+                                    <p class="text-[#8a7060] text-[0.65rem] font-light">
+                                        ₱{{ unit_price|floatformat:2 }} × {{ item.quantity }}
                                     </p>
                                 </div>
+                                <!-- Subtotal -->
+                                <p class="text-[#6f4e37] text-sm font-bold shrink-0">
+                                    ₱{{ unit_price|multiply:item.quantity|floatformat:2 }}
+                                </p>
+                            </div>
+                            {% endwith %}
+                            {% endfor %}
+                        </div>
+
+                        <div class="px-5 py-5 flex flex-col gap-3">
+
+                            <!-- Divider -->
+                            <div class="h-px bg-[#6f4e37]/10"></div>
+
+                            <!-- Subtotal -->
+                            <div class="flex justify-between items-center">
+                                <span class="text-[#8a7060] text-sm font-light">Subtotal</span>
+                                <span class="text-[#2C1503] text-sm font-semibold">₱{{ cart_total|floatformat:2 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[#8a7060] text-sm font-light">Delivery</span>
+                                <span class="text-[#6f4e37] text-sm font-semibold">Free</span>
                             </div>
 
-                            <!-- ── SIZE SELECTOR ── -->
-                            {% if variants %}
-                            <div class="flex flex-col gap-2 pb-4 border-b border-[#6f4e37]/10">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[#8a7060] text-xs font-bold tracking-widest uppercase">Size</span>
-                                    <span id="variant-error"
-                                          class="text-red-400 text-xs font-light hidden">
-                                        Please select a size
-                                    </span>
-                                </div>
-                                <div class="flex gap-2 flex-wrap" id="size-btns">
-                                    {% for variant in variants %}
-                                    <button type="button"
-                                            data-variant-id="{{ variant.id }}"
-                                            data-size="{{ variant.get_size_display }}"
-                                            data-additional="{{ variant.additional_price }}"
-                                            onclick="selectVariant(this)"
-                                            class="size-btn">
-                                        <span>{{ variant.get_size_display }}</span>
-                                        {% if variant.additional_price > 0 %}
-                                        <span class="size-add">+₱{{ variant.additional_price }}</span>
-                                        {% else %}
-                                        <span class="size-add">Base</span>
-                                        {% endif %}
-                                    </button>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endif %}
-
-                            <!-- Qty -->
-                            <div class="flex items-center justify-between">
-                                <span class="text-[#8a7060] text-xs font-bold tracking-widest uppercase">Quantity</span>
-                                <div class="flex items-center gap-2 bg-[#EDE0CC]/60 rounded-xl px-1 py-1">
-                                    <button type="button" onclick="changeQty(-1)"
-                                            class="w-7 h-7 flex items-center justify-center bg-white text-[#2C1503]
-                                                   font-bold rounded-lg shadow-sm hover:bg-[#6f4e37] hover:text-white
-                                                   transition-all duration-150 active:scale-90">−</button>
-                                    <span id="qty-display"
-                                          class="font-display text-[#2C1503] font-bold text-base w-6 text-center select-none">1</span>
-                                    <button type="button" onclick="changeQty(1)"
-                                            class="w-7 h-7 flex items-center justify-center bg-white text-[#2C1503]
-                                                   font-bold rounded-lg shadow-sm hover:bg-[#6f4e37] hover:text-white
-                                                   transition-all duration-150 active:scale-90">+</button>
-                                </div>
-                            </div>
-
-                            <!-- Price breakdown -->
-                            <div class="flex flex-col gap-2 pt-2 border-t border-[#6f4e37]/10">
-                                <div class="flex justify-between">
-                                    <span class="text-[#8a7060] text-sm font-light">Subtotal</span>
-                                    <span id="subtotal-display" class="text-[#2C1503] text-sm font-semibold">
-                                        ₱{{ product.price|floatformat:2 }}
-                                    </span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-[#8a7060] text-sm font-light">Delivery</span>
-                                    <span class="text-[#6f4e37] text-sm font-semibold">Free</span>
-                                </div>
-                            </div>
+                            <!-- Divider -->
+                            <div class="h-px bg-[#6f4e37]/10"></div>
                             <!-- I-lagay bago ang Total -->
                             <div id="discount-row" class="flex justify-between items-center hidden">
                                 <span class="text-[#8a7060] text-sm font-light">Points discount</span>
@@ -367,10 +313,10 @@
                             </div>
 
                             <!-- Total -->
-                            <div class="flex justify-between items-center pt-3 border-t border-[#6f4e37]/10">
+                            <div class="flex justify-between items-center">
                                 <span class="font-display text-[#2C1503] text-base font-bold">Total</span>
                                 <span class="font-display text-[#6f4e37] text-2xl font-bold">
-                                    ₱<span id="total-value">{{ product.price|floatformat:2 }}</span>
+                                    ₱{{ cart_total|floatformat:2 }}
                                 </span>
                             </div>
 
@@ -432,7 +378,7 @@
                                     class="relative overflow-hidden w-full
                                            bg-[#2C1503] text-[#C4A882]
                                            font-bold text-xs tracking-widest uppercase
-                                           py-4 rounded-2xl
+                                           py-4 rounded-2xl mt-1
                                            hover:bg-[#6f4e37] hover:text-white
                                            transition-all duration-300 active:scale-[0.98]
                                            flex items-center justify-center gap-2">
@@ -443,8 +389,20 @@
                                 Place Order
                             </button>
 
+                            <a href="{% url 'cart' user.id %}"
+                               class="w-full text-[#8a7060] text-xs font-bold tracking-widest uppercase
+                                      py-2 rounded-2xl border-2 border-transparent
+                                      hover:border-[#6f4e37]/25 hover:text-[#6f4e37]
+                                      transition-all duration-200 flex items-center justify-center gap-2">
+                                <svg class="w-3.5 h-3.5 rotate-180" fill="none" stroke="currentColor"
+                                     stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                                </svg>
+                                Back to Cart
+                            </a>
+
                             <p class="text-[#8a7060]/50 text-[0.65rem] text-center font-light">
-                                No account required · Free delivery
+                                Free delivery · Secure checkout
                             </p>
                         </div>
                     </div>
@@ -456,50 +414,26 @@
 </div>
 
 <script>
-    const BASE_PRICE     = {{ product.price }};
-    const HAS_VARIANTS   = {{ variants|yesno:"true,false" }};
-    let _qty             = 1;
-    let _additionalPrice = 0;
+    function applyPointsDiscount(pointsToUse) {
+        document.getElementById('hidden-points').value = pointsToUse;
 
-    /* ── Variant / Size ── */
-    function selectVariant(btn) {
-        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        const discount    = (parseInt(pointsToUse) / 100) * 10;
+        const baseTotal   = {{ cart_total }};
+        const newTotal    = Math.max(0, baseTotal - discount).toFixed(2);
 
-        document.getElementById('hidden-variant').value = btn.dataset.variantId;
-        _additionalPrice = parseFloat(btn.dataset.additional) || 0;
+        // I-update ang displayed total
+        document.getElementById('grand-total-value').textContent = newTotal;
+        document.getElementById('header-total').textContent      = newTotal;
 
-        // Show selected size in product info
-        const label = document.getElementById('selected-size-label');
-        label.textContent = btn.dataset.size + ' size selected';
-        label.classList.remove('hidden');
-
-        document.getElementById('variant-error').classList.add('hidden');
-        updatePrice();
+        // I-show ang discount line
+        const discountRow = document.getElementById('discount-row');
+        if (discount > 0) {
+            discountRow.classList.remove('hidden');
+            document.getElementById('discount-value').textContent = '- ₱' + discount.toFixed(2);
+        } else {
+            discountRow.classList.add('hidden');
+        }
     }
-
-    /* ── Qty ── */
-    function changeQty(delta) {
-        _qty = Math.max(1, _qty + delta);
-        document.getElementById('qty-display').textContent = _qty;
-        document.getElementById('hidden-qty').value        = _qty;
-        updatePrice();
-    }
-
-    /* ── Price ── */
-    function updatePrice() {
-        const unit        = BASE_PRICE + _additionalPrice;
-        const baseTotal   = unit * _qty;
-
-        // I-check kung may points discount na naka-apply
-        const pointsToUse = parseInt(document.getElementById('hidden-points').value) || 0;
-        const discount    = (pointsToUse / 100) * 10;
-        const finalTotal  = Math.max(0, baseTotal - discount).toFixed(2);
-
-        document.getElementById('subtotal-display').textContent = '₱' + baseTotal.toFixed(2);
-        document.getElementById('total-value').textContent      = finalTotal;
-    }
-
     /* ── Payment ── */
     function selectPayment(method) {
         document.getElementById('hidden-payment').value = method;
@@ -516,22 +450,8 @@
         }
     }
 
-    /* ── Submit ── */
-    document.getElementById('checkout-form').addEventListener('submit', function(e) {
-        // Validate size selection
-        if (HAS_VARIANTS && !document.getElementById('hidden-variant').value) {
-            e.preventDefault();
-            const errEl = document.getElementById('variant-error');
-            errEl.classList.remove('hidden');
-            document.getElementById('size-btns').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Shake the size buttons
-            const sizeBtns = document.getElementById('size-btns');
-            sizeBtns.classList.add('animate-pulse');
-            setTimeout(() => sizeBtns.classList.remove('animate-pulse'), 600);
-            return;
-        }
-
-        // Loading state
+    /* ── Submit loading state ── */
+    document.getElementById('checkout-form').addEventListener('submit', function() {
         const btn = document.getElementById('place-order-btn');
         btn.innerHTML = `
             <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"
@@ -542,26 +462,5 @@
             Placing Order...`;
         btn.disabled = true;
     });
-    function applyPointsDiscount(pointsToUse) {
-        document.getElementById('hidden-points').value = pointsToUse;
-
-        const discount  = (parseInt(pointsToUse) / 100) * 10;
-        const unit      = BASE_PRICE + _additionalPrice;
-        const baseTotal = unit * _qty;
-        const newTotal  = Math.max(0, baseTotal - discount).toFixed(2);
-
-        // I-update ang displayed total — tamang ID na
-        document.getElementById('subtotal-display').textContent = '₱' + (unit * _qty).toFixed(2);
-        document.getElementById('total-value').textContent      = newTotal;
-
-        // I-show ang discount line
-        const discountRow = document.getElementById('discount-row');
-        if (discount > 0) {
-            discountRow.classList.remove('hidden');
-            document.getElementById('discount-value').textContent = '- ₱' + discount.toFixed(2);
-        } else {
-            discountRow.classList.add('hidden');
-        }
-    }
 </script>
 {% endblock %}

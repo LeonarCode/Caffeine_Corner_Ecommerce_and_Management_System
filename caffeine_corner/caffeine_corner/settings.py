@@ -228,10 +228,10 @@ UNFOLD = {
     "SITE_SUBHEADER": "Store Management",
     "SITE_URL": "/",
     "SITE_SYMBOL": "coffee",
- 
+
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
- 
+
     "COLORS": {
         "primary": {
             "50":  "250 245 235",
@@ -247,7 +247,7 @@ UNFOLD = {
             "950": " 30  15   5",
         },
     },
- 
+
     "LOGIN": {
         "image": "img/Background.jpeg",
         "redirect_after": "/admin/",
@@ -256,7 +256,7 @@ UNFOLD = {
     "STYLES": [
         lambda request: static("css/login_fix.css"),
     ],
- 
+
     "SIDEBAR": {
         "show_search": True,
         "show_all_applications": False,
@@ -288,9 +288,19 @@ UNFOLD = {
                         "link": reverse_lazy("admin:online_shop_product_changelist"),
                     },
                     {
+                        "title": _("+ Add Product"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:online_shop_product_add"),
+                    },
+                    {
                         "title": _("Variants"),
                         "icon": "tune",
                         "link": reverse_lazy("admin:online_shop_variant_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Variant"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:online_shop_variant_add"),
                     },
                     {
                         "title": _("Categories"),
@@ -298,14 +308,29 @@ UNFOLD = {
                         "link": reverse_lazy("admin:online_shop_category_changelist"),
                     },
                     {
+                        "title": _("+ Add Category"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:online_shop_category_add"),
+                    },
+                    {
                         "title": _("Ratings"),
                         "icon": "star",
                         "link": reverse_lazy("admin:online_shop_rating_changelist"),
                     },
                     {
+                        "title": _("+ Add Rating"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:online_shop_rating_add"),
+                    },
+                    {
                         "title": _("Loyalty Points"),
                         "icon": "loyalty",
                         "link": reverse_lazy("admin:online_shop_loyaltypoint_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Loyalty Point"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:online_shop_loyaltypoint_add"),
                     },
                 ],
             },
@@ -321,9 +346,19 @@ UNFOLD = {
                         "link": reverse_lazy("admin:inventory_inventory_changelist"),
                     },
                     {
+                        "title": _("+ Add Inventory Item"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:inventory_inventory_add"),
+                    },
+                    {
                         "title": _("Stock Movements"),
                         "icon": "swap_vert",
                         "link": reverse_lazy("admin:inventory_stockmovement_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Stock Movement"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:inventory_stockmovement_add"),
                     },
                     {
                         "title": _("Purchase Orders"),
@@ -331,9 +366,19 @@ UNFOLD = {
                         "link": reverse_lazy("admin:inventory_purchaseorder_changelist"),
                     },
                     {
+                        "title": _("+ Add Purchase Order"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:inventory_purchaseorder_add"),
+                    },
+                    {
                         "title": _("Suppliers"),
                         "icon": "storefront",
                         "link": reverse_lazy("admin:inventory_supplier_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Supplier"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:inventory_supplier_add"),
                     },
                     {
                         "title": _("Inv. Categories"),
@@ -341,9 +386,19 @@ UNFOLD = {
                         "link": reverse_lazy("admin:inventory_inventorycategory_changelist"),
                     },
                     {
+                        "title": _("+ Add Inv. Category"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:inventory_inventorycategory_add"),
+                    },
+                    {
                         "title": _("Ingredients"),
                         "icon": "science",
                         "link": reverse_lazy("admin:inventory_ingredient_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Ingredient"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:inventory_ingredient_add"),
                     },
                 ],
             },
@@ -359,9 +414,19 @@ UNFOLD = {
                         "link": reverse_lazy("admin:auth_user_changelist"),
                     },
                     {
+                        "title": _("+ Add User"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:auth_user_add"),
+                    },
+                    {
                         "title": _("Groups"),
                         "icon": "group",
                         "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Group"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:auth_group_add"),
                     },
                     {
                         "title": _("Email addresses"),
@@ -387,6 +452,11 @@ UNFOLD = {
                         "link": reverse_lazy("admin:socialaccount_socialapp_changelist"),
                     },
                     {
+                        "title": _("+ Add Social Application"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:socialaccount_socialapp_add"),
+                    },
+                    {
                         "title": _("Social tokens"),
                         "icon": "key",
                         "link": reverse_lazy("admin:socialaccount_socialtoken_changelist"),
@@ -395,6 +465,11 @@ UNFOLD = {
                         "title": _("Sites"),
                         "icon": "language",
                         "link": reverse_lazy("admin:sites_site_changelist"),
+                    },
+                    {
+                        "title": _("+ Add Site"),
+                        "icon": "add_circle",
+                        "link": reverse_lazy("admin:sites_site_add"),
                     },
                 ],
             },
@@ -409,4 +484,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+LOYALTY_POINTS_PER_ORDER    = 10
+LOYALTY_POINTS_FOR_DISCOUNT = 100
+LOYALTY_DISCOUNT_VALUE      = 10  # ₱10 off
 

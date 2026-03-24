@@ -517,3 +517,12 @@ class IngredientAdmin(ModelAdmin):
     list_filter   = ["inventory__category"]
     ordering      = ["product__name"]
 
+    def has_add_permission(self, request):
+        return True
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        return actions
+
+    class Media:
+        js = ('js/force_add_button.js',)

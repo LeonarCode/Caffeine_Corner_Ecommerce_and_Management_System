@@ -5,7 +5,7 @@ from unfold.admin import ModelAdmin, TabularInline
  
 from online_shop.models import (
     Category, Product, Variant, Rating,
-    Order, CartItem, LoyaltyPoint,
+    Order, CartItem, LoyaltyPoint, OrderItem
 )
  
  
@@ -21,7 +21,6 @@ def _badge(label, bg, fg):
     )
  
 SIZE_ORDER = {"small": 0, "medium": 1, "large": 2}
- 
  
 # ─────────────────────────────────────────────────────────────────────────────
 # Category
@@ -188,55 +187,44 @@ class RatingAdmin(ModelAdmin):
 # Order
 # ─────────────────────────────────────────────────────────────────────────────
  
+# admin.py
+
+class OrderItemInline(admin.TabularInline):
+    model      = OrderItem
+    extra      = 0
+    readonly_fields = ('product', 'variant', 'quantity', 'price', 'subtotal')
+
+    def subtotal(self, obj):
+        return f'₱{obj.subtotal}'
+    subtotal.short_description = 'Subtotal'
+
+
 @admin.register(Order)
-class OrderAdmin(ModelAdmin):
-    compressed_fields = True
-    list_fullwidth    = True
-    list_display  = [
-        "id", "user", "product", "show_variant",
-        "quantity", "show_subtotal", "created_at",
-    ]
-    list_filter   = ["product__category", "variant__size", "created_at"]
-    search_fields = ["user__username", "user__email", "product__name"]
-    ordering      = ["-created_at"]
-    readonly_fields = ["created_at", "updated_at"]
-    date_hierarchy  = "created_at"
- 
-    fieldsets = (
-        (_("Order"), {
-            "fields": ("user", "product", "variant", "quantity"),
-            "classes": ("tab",),
-        }),
-        (_("Timestamps"), {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("tab",),
-        }),
-    )
- 
-    def show_variant(self, obj):
-        if not obj.variant:
-            return mark_safe('<span style="color:#b4b2a9;">No variant</span>')
-        colors = {
-            "small":  ("#e6f0fa", "#1a5494"),
-            "medium": ("#fff6e0", "#a06010"),
-            "large":  ("#eaf5ed", "#2e7d4a"),
-        }
-        bg, fg = colors.get(obj.variant.size, ("#f1efe8", "#5f5e5a"))
-        return _badge(obj.variant.get_size_display(), bg, fg)
-    show_variant.short_description = _("Size")
- 
-    def show_subtotal(self, obj):
-        price = obj.product.price
-        if obj.variant:
-            price += obj.variant.additional_price
-        subtotal = price * obj.quantity
-        return format_html(
-            '<span style="font-weight:600;">₱{}</span>',
-            f"{subtotal:,.2f}"
-        )
-    show_subtotal.short_description = _("Subtotal")
- 
- 
+class OrderAdmin(admin.ModelAdmin):
+    list_display  = ('id', 'email', 'status', 'payment_method', 'payment_status', 'item_count', 'total_price', 'created_at')
+    list_filter   = ('status', 'payment_method', 'payment_status')
+    search_fields = ('email', 'address', 'paymongo_id')
+    readonly_fields = ('created_at', 'updated_at', 'total_price', 'item_count')
+    inlines       = [OrderItemInline]
+
+    def total_price(self, obj):
+        return f'₱{obj.total_price}'
+    total_price.short_description = 'Total'
+
+    def item_count(self, obj):
+        return obj.item_count
+    item_count.short_description = 'Items'
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display  = ('order', 'product', 'variant', 'quantity', 'price', 'subtotal')
+    list_filter   = ('product__category', 'variant__size')
+    search_fields = ('product__name', 'order__email')
+
+    def subtotal(self, obj):
+        return f'₱{obj.subtotal}'
+    subtotal.short_description = 'Subtotal'
 # ─────────────────────────────────────────────────────────────────────────────
 # CartItem
 # ─────────────────────────────────────────────────────────────────────────────

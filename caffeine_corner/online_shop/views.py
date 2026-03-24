@@ -1,12 +1,16 @@
 from django.db import models
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Category, Variant, Rating, Order, CartItem
+from .models import LoyaltyPoint, Product, Category, Variant, Rating, Order, CartItem, OrderItem
 from django.contrib.auth.models import User
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import requests
 import base64
 import os
+import hmac
+import hashlib
+import json
 # Create your views here.
 
 def welcome(request):
@@ -149,27 +153,147 @@ def addToCart(request, product_id):
     })
 
 def removeFromCart(request, cart_item_id):
-    cart_item = CartItem.objects.get(id=cart_item_id)
-    cart_item.quantity -= 1
-    if cart_item.quantity == 0:
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+    
+    try:
+        cart_item = CartItem.objects.get(id=cart_item_id, user=request.user)
         cart_item.delete()
-    else:
+        
+        remaining   = CartItem.objects.filter(user=request.user).select_related('product', 'variant')
+        cart_total  = sum(
+            (item.product.price + (item.variant.additional_price if item.variant else 0)) * item.quantity
+            for item in remaining
+        )
+        
+        return JsonResponse({
+            'success':    True,
+            'cart_total': float(cart_total),
+            'cart_count': remaining.count()
+        })
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'Item not found'}, status=404)
+
+
+def updateCartItem(request, cart_item_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+    
+    try:
+        import json
+        body     = json.loads(request.body)
+        quantity = int(body.get('quantity', 1))
+        
+        if quantity < 1:
+            return JsonResponse({'error': 'Quantity must be at least 1'}, status=400)
+        if quantity > 9999:
+            return JsonResponse({'error': 'Quantity cannot exceed 9999'}, status=400)
+
+        cart_item          = CartItem.objects.get(id=cart_item_id, user=request.user)
+        cart_item.quantity = quantity
         cart_item.save()
-    return JsonResponse({'success': True, 'cart_item': cart_item.id})
 
-def clearCart(request):
-    CartItem.objects.filter(user=request.user).delete()
-    return JsonResponse({'success': True})
+        unit_price   = cart_item.product.price + (cart_item.variant.additional_price if cart_item.variant else 0)
+        item_subtotal = float(unit_price * quantity)
 
-def create_paymongo_source(amount_cents, success_url, failed_url):
+        remaining  = CartItem.objects.filter(user=request.user).select_related('product', 'variant')
+        cart_total = sum(
+            (item.product.price + (item.variant.additional_price if item.variant else 0)) * item.quantity
+            for item in remaining
+        )
+
+        return JsonResponse({
+            'success':      True,
+            'quantity':     quantity,
+            'subtotal':     item_subtotal,
+            'cart_total':   float(cart_total),
+            'cart_count':   remaining.count()
+        })
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'Item not found'}, status=404)
+    except (ValueError, KeyError):
+        return JsonResponse({'error': 'Invalid quantity'}, status=400)
+
+@csrf_exempt  # PayMongo ang nagse-send, hindi ang iyong form
+def paymongo_webhook(request):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    # 1. I-verify na galing talaga ito sa PayMongo
+    webhook_secret = os.getenv("PAYMONGO_WEBHOOK_SECRET")
+    sig_header     = request.headers.get("Paymongo-Signature", "")
+    
+    # I-parse ang signature header: t=timestamp,te=sig,li=sig
+    sig_parts = {}
+    for part in sig_header.split(","):
+        if "=" in part:
+            k, v = part.split("=", 1)
+            sig_parts[k.strip()] = v.strip()
+
+    timestamp  = sig_parts.get("t", "")
+    test_sig   = sig_parts.get("te", "")  # test mode
+    live_sig   = sig_parts.get("li", "")  # live mode
+
+    raw_body = request.body.decode("utf-8")
+    message  = f"{timestamp}.{raw_body}"
+    expected = hmac.new(
+        webhook_secret.encode(),
+        message.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    # Tanggapin ang test o live signature
+    if expected not in (test_sig, live_sig):
+        return JsonResponse({'error': 'Invalid signature'}, status=400)
+
+    # 2. I-process ang event
+    payload    = json.loads(raw_body)
+    event_type = payload.get("data", {}).get("attributes", {}).get("type", "")
+
+    if event_type == "source.chargeable":
+        source_data = payload["data"]["attributes"]["data"]
+        source_id   = source_data["id"]
+        amount      = source_data["attributes"]["amount"]
+
+        # Hanapin ang order gamit ang paymongo_id
+        order = Order.objects.filter(paymongo_id=source_id).first()
+        if not order:
+            JsonResponse({'error': 'Order not found'}, status=404)
+
+        # 3. I-create ang Payment
+        _create_paymongo_payment(source_id, amount, order)
+
+    elif event_type == "payment.paid":
+        payment_data = payload["data"]["attributes"]["data"]
+        source_id    = payment_data["attributes"].get("source", {}).get("id", "")
+
+        order = Order.objects.filter(paymongo_id=source_id).first()
+        if order:
+            order.payment_status = "paid"
+            order.status         = "confirmed"
+            order.save()
+
+            # 4. I-clear na ang cart dito — SECURE na!
+            if order.user:
+                CartItem.objects.filter(user=order.user).delete()
+                _award_loyalty_points(order.user, order.total_price)
+
+    return JsonResponse({'status': 'ok'}, status=200)
+
+
+def _get_paymongo_headers():
+    """Shared helper para sa PayMongo API headers."""
     secret_key = os.getenv("PAYMONGO_SKEY")
     encoded    = base64.b64encode(f"{secret_key}:".encode()).decode()
+    return {
+        "Authorization": f"Basic {encoded}",
+        "Content-Type":  "application/json",
+    }
+
+def create_paymongo_source(amount_cents, success_url, failed_url):
     res = requests.post(
         "https://api.paymongo.com/v1/sources",
-        headers={
-            "Authorization": f"Basic {encoded}",
-            "Content-Type":  "application/json"
-        },
+        headers=_get_paymongo_headers(),
         json={
             "data": {
                 "attributes": {
@@ -186,6 +310,25 @@ def create_paymongo_source(amount_cents, success_url, failed_url):
     )
     return res.json()
 
+def _create_paymongo_payment(source_id, amount, order):
+    try:
+        requests.post(
+            "https://api.paymongo.com/v1/payments",
+            headers=_get_paymongo_headers(),
+            json={
+                "data": {
+                    "attributes": {
+                        "amount":      amount,
+                        "currency":    "PHP",
+                        "source":      {"id": source_id, "type": "source"},
+                        "description": f"Caffeine Corner Order #{order.id}",
+                    }
+                }
+            },
+        )
+    except Exception as e:
+        print(f"PayMongo payment creation failed: {e}")
+
 def checkout(request, product_id):
     product  = get_object_or_404(Product, id=product_id)
     variants = product.variants.all()  # get all sizes
@@ -195,6 +338,29 @@ def checkout(request, product_id):
         'product':       product,
         'variants':      variants,
         'error_message': error_message,
+    })
+
+def cartCheckout(request):
+    if not request.user.is_authenticated:
+        return redirect('signin')
+
+    user       = request.user
+    cart_items = CartItem.objects.filter(user=user).select_related('product', 'variant')
+
+    if not cart_items.exists():
+        return redirect('cart', user_id=user.id)
+
+    # Calculate total
+    total = sum(
+        (item.product.price + (item.variant.additional_price if item.variant else 0)) * item.quantity
+        for item in cart_items
+    )
+    error = request.GET.get('error')
+
+    return render(request, 'home/cart_checkout.html', {
+        'cart_items':    cart_items,
+        'cart_total':    total,
+        'error_message': 'Payment setup failed. Please try again.' if error else None,
     })
 
 def placeOrder(request):
@@ -209,10 +375,24 @@ def placeOrder(request):
     notes      = request.POST.get('notes', '')
     payment_method = request.POST.get('payment_method', 'cod')
     gcash_ref      = request.POST.get('gcash_ref', '')
-
     product = get_object_or_404(Product, id=product_id, is_available=True)
     user    = request.user if request.user.is_authenticated else None
+    points_to_use = int(request.POST.get('points_to_use', 0))
+    discount = 0
 
+    loyalty = None
+    if user and points_to_use > 0:
+        try:
+            loyalty  = LoyaltyPoint.objects.get(user=user)
+            discount = loyalty.redeem(points_to_use)
+            total   -= discount  # i-apply ang discount sa total
+            if total < 0:
+                total = 0
+        except (LoyaltyPoint.DoesNotExist, ValueError):
+            points_to_use = 0
+            discount      = 0
+
+    amount_cents = int(total * 100)
     # Get variant if selected
     variant = None
     if variant_id:
@@ -221,13 +401,14 @@ def placeOrder(request):
     # Calculate total price with variant additional price
     unit_price   = product.price + (variant.additional_price if variant else 0)
     amount_cents = int(unit_price * quantity * 100)
-
+    if payment_method == 'cod':
+        _award_loyalty_points(user, total)
     if payment_method == 'gcash':
         order = Order.objects.create(
             user=user, email=email, address=address, notes=notes,
             product=product, variant=variant, quantity=quantity,
             payment_method='gcash', payment_status='unpaid',
-            gcash_ref=gcash_ref,
+            gcash_ref=gcash_ref, discount = discount,
         )
         try:
             success_url  = request.build_absolute_uri(f'/order/success/?order_id={order.id}')
@@ -249,15 +430,103 @@ def placeOrder(request):
         )
         return redirect('/?order=success')
     
-def orderSuccess(request):
-    order_id = request.GET.get('order_id')
-    if order_id:
-        order = Order.objects.filter(id=order_id).first()
-        if order:
-            order.payment_status = 'paid'
-            order.status         = 'confirmed'
+def placeOrderFromCart(request):
+    if request.method != 'POST':
+        return redirect('home')
+
+    email          = request.POST.get('email')
+    address        = request.POST.get('address')
+    notes          = request.POST.get('notes', '')
+    payment_method = request.POST.get('payment_method', 'cod')
+    gcash_ref      = request.POST.get('gcash_ref', '')
+    user           = request.user if request.user.is_authenticated else None
+    points_to_use = int(request.POST.get('points_to_use', 0))
+    discount = 0
+
+    loyalty = None
+    if user and points_to_use > 0:
+        try:
+            loyalty  = LoyaltyPoint.objects.get(user=user)
+            discount = loyalty.redeem(points_to_use)
+            total   -= discount  # i-apply ang discount sa total
+            if total < 0:
+                total = 0
+        except (LoyaltyPoint.DoesNotExist, ValueError):
+            points_to_use = 0
+            discount      = 0
+
+    amount_cents = int(total * 100)
+    # Get cart items
+    if not user:
+        return redirect('signin')  # cart requires login
+    cart_items = CartItem.objects.filter(user=user).select_related('product', 'variant')
+
+    if not cart_items.exists():
+        return redirect('cart', user_id=user.id)
+
+    # Calculate total
+    total = sum(
+        (item.product.price + (item.variant.additional_price if item.variant else 0)) * item.quantity
+        for item in cart_items
+    )
+    amount_cents = int(total * 100)
+
+    # Create Order
+    order = Order.objects.create(
+        user           = user,
+        email          = email,
+        address        = address,
+        notes          = notes,
+        payment_method = payment_method,
+        payment_status = 'unpaid',
+        gcash_ref      = gcash_ref,
+        discount = discount
+    )
+
+    # Create OrderItems from cart
+    for item in cart_items:
+        unit_price = item.product.price + (item.variant.additional_price if item.variant else 0)
+        OrderItem.objects.create(
+            order    = order,
+            product  = item.product,
+            variant  = item.variant,
+            quantity = item.quantity,
+            price    = unit_price,  # snapshot price
+        )
+    if payment_method == 'cod':
+        _award_loyalty_points(user, total)
+
+    if payment_method == 'gcash':
+        try:
+            success_url  = request.build_absolute_uri(f'/order/success/?order_id={order.id}')
+            failed_url   = request.build_absolute_uri(f'/order/failed/?order_id={order.id}')
+            data         = create_paymongo_source(amount_cents, success_url, failed_url)
+            source       = data['data']
+            checkout_url = source['attributes']['redirect']['checkout_url']
+            order.paymongo_id = source['id']
             order.save()
-    # Render home with success flag — JS will show the overlay
+            return redirect(checkout_url)
+        except Exception as e:
+            order.delete()
+            return redirect(f'/cart-checkout/?error=payment_failed')
+    else:
+        # COD — clear cart and redirect
+        cart_items.delete()
+        return redirect('/?order=success')
+    
+def _award_loyalty_points(user, total_amount):
+    """I-award ang loyalty points pagka-confirmed ng order."""
+    if not user:
+        return
+    loyalty, _ = LoyaltyPoint.objects.get_or_create(user=user)
+    earned      = loyalty.earn(total_amount)
+    return earned
+    
+
+
+def orderSuccess(request):
+    # Huwag nang mag-update dito — ang webhook na ang bahala
+    # Pero puwede mo pa rin i-show ang success page
     return redirect('/?order=success')
 
 
@@ -265,7 +534,7 @@ def orderFailed(request):
     order_id = request.GET.get('order_id')
     if order_id:
         order = Order.objects.filter(id=order_id).first()
-        if order:
+        if order and order.payment_status == 'unpaid':
             order.payment_status = 'failed'
             order.status         = 'cancelled'
             order.save()

@@ -131,7 +131,6 @@ class Rating(models.Model):
 
 
 class Order(models.Model):
-
     STATUS_CHOICES = [
         ('pending',    'Pending'),
         ('confirmed',  'Confirmed'),
@@ -139,66 +138,73 @@ class Order(models.Model):
         ('delivered',  'Delivered'),
         ('cancelled',  'Cancelled'),
     ]
-
     PAYMENT_METHOD_CHOICES = [
         ('cod',   'Cash on Delivery'),
         ('gcash', 'GCash'),
     ]
-
     PAYMENT_STATUS_CHOICES = [
-        ('unpaid',  'Unpaid'),
-        ('paid',    'Paid'),
-        ('failed',  'Failed'),
-        ('refunded','Refunded'),
+        ('unpaid',   'Unpaid'),
+        ('paid',     'Paid'),
+        ('failed',   'Failed'),
+        ('refunded', 'Refunded'),
     ]
 
-    # ── Who ordered ──
-    user    = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # null = guest
-    email   = models.EmailField()           # required for both guest and logged in
-    address = models.TextField()
-    notes   = models.TextField(blank=True, default='')
+    # Who ordered
+    user           = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    email          = models.EmailField()
+    address        = models.TextField()
+    notes          = models.TextField(blank=True, default='')
 
-    # ── What was ordered ──
-    product  = models.ForeignKey(Product, on_delete=models.CASCADE)
-    variant  = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
-    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(9999)])
+    # Status
+    status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
-    # ── Order status ──
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-
-    # ── Payment ──
+    # Payment
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='cod')
     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
     gcash_ref      = models.CharField(max_length=100, blank=True, default='')
-    paymongo_id    = models.CharField(max_length=100, blank=True, default='')  # PayMongo source ID
+    paymongo_id    = models.CharField(max_length=100, blank=True, default='')
 
-    # ── Timestamps ──
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+    points_earned = models.PositiveIntegerField(default=0)
+    points_used   = models.PositiveIntegerField(default=0)
+    discount      = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
-        ordering = ("-created_at",)
-        verbose_name = "Order"
-        verbose_name_plural = "Orders"
-        indexes = [
-            models.Index(fields=["user", "product"]),
-            models.Index(fields=["payment_status"]),
-            models.Index(fields=["paymongo_id"]),
-        ]
+        ordering = ('-created_at',)
+        verbose_name = 'Order'
+        verbose_name_plural = 'Orders'
 
     def __str__(self):
         name = self.user.username if self.user else self.email
-        return f"{name} - {self.product.name} x {self.quantity}"
-    
-    def clean(self):
-        if self.product and not self.product.is_available:
-            raise ValidationError("This product is no longer available.")
-        if self.quantity < 1 or self.quantity > 9999:
-            raise ValidationError("Quantity must be between 1 and 9999.")
+        return f"Order #{self.id} — {name}"
 
     @property
     def total_price(self):
-        return self.product.price * self.quantity
+        return sum(item.subtotal for item in self.items.all())
+
+    @property
+    def item_count(self):
+        return sum(item.quantity for item in self.items.all())
+
+
+class OrderItem(models.Model):
+    order    = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product  = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant  = models.ForeignKey(Variant, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    price    = models.DecimalField(max_digits=10, decimal_places=2)  # snapshot price at time of order
+
+    class Meta:
+        verbose_name = 'Order Item'
+        verbose_name_plural = 'Order Items'
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
+    @property
+    def subtotal(self):
+        return self.price * self.quantity
 
 class CartItem(models.Model):
     """Cart items for MySQL-safe uniqueness.
@@ -244,14 +250,42 @@ class CartItem(models.Model):
 
 
 class LoyaltyPoint(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="loyalty")
-    points = models.PositiveIntegerField(default=0)
+    user         = models.OneToOneField(User, on_delete=models.CASCADE, related_name="loyalty")
+    points       = models.PositiveIntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ("-last_updated",)
+        ordering     = ("-last_updated",)
         verbose_name = "Loyalty point"
         verbose_name_plural = "Loyalty points"
 
     def __str__(self):
         return f"{self.user.username} - {self.points} points"
+
+    def earn(self, total_amount):
+        """1 point per ₱10 spent."""
+        earned      = int(total_amount // 10)
+        self.points += earned
+        self.save()
+        return earned
+
+    def redeem(self, points_to_use):
+        """100 points = ₱10 discount."""
+        if points_to_use > self.points:
+            raise ValueError("Hindi sapat ang points!")
+        if points_to_use % 100 != 0:
+            raise ValueError("Multiples of 100 lang ang pwedeng i-redeem!")
+        discount     = (points_to_use // 100) * 10
+        self.points -= points_to_use
+        self.save()
+        return discount
+
+    @property
+    def discount_value(self):
+        """Kung ire-redeem lahat ng points, magkano ang discount."""
+        return (self.points // 100) * 10
+
+    @property
+    def redeemable_points(self):
+        """Pinaka-maraming points na pwedeng i-redeem (multiple of 100)."""
+        return (self.points // 100) * 100
